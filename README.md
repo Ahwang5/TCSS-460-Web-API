@@ -4,6 +4,9 @@
  ##Link to the web API
 [Heroku](https://group7-tcss460-web-api-6a6786271b27.herokuapp.com/)
 
+ ##Link to the API documentation
+ [Github](https://ahwang5.github.io/TCSS-460-Web-API/)
+
 ##Alpha Sprint Contribution
 - Andrew Hwang
   - Hosted the GitHub repository on Heroku
