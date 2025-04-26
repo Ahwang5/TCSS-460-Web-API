@@ -22,3 +22,19 @@ The primary form of communication between team members was Discord.
 
 ##Alpha Sprint Comments
 n/a
+
+##Beta Sprint Contribution
+- Andrew Hwang
+  -
+- Ayub Mohamed
+  -
+- Bernard Bega
+  - Worked on getting the sql for the database
+- Bhavneet Bhargava
+  -
+
+##Beta Sprint Meetings
+The primary form of communication between team members was Discord and meeting up after class.
+
+##Beta Sprint Comments
+n/a
