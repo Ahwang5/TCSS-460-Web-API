@@ -11,6 +11,8 @@
         "local": "nodemon -r dotenv/config src/index.ts",
         "lint": "eslint . --ext .ts",
         "test": "echo \"Error: no test specified\" && exit 1",
+        "test:postman": "newman run tests/books-api.postman_collection.json",
+        "test:e2e": "start-server-and-test \"npm run local\" http://localhost:4001 \"npm run test:postman\"",
         "format:check": "prettier --check .",
         "format:write": "prettier --write .",
         "deploy": "git add . && git commit -m Heroku && git push heroku master"
@@ -38,8 +40,10 @@
         "eslint-plugin-import": "^2.28.1",
         "eslint-plugin-n": "^16.0.2",
         "eslint-plugin-promise": "^6.1.1",
+        "newman": "^6.2.1",
         "nodemon": "^3.1.0",
         "prettier": "^3.0.3",
+        "start-server-and-test": "^2.0.11",
         "ts-node": "^10.9.2",
         "typescript": "5.4.2"
     },
