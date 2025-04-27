@@ -1,34 +1,29 @@
-# TCSS460-BE-Lecture
+# TCSS 460 – Alpha Sprint Web API Project
 
+## Hosted Links
+- **Heroku-hosted Web API:** 
+- **GitHub Pages-hosted API Documentation:** 
 
- ##Link to the web API
-[Heroku](https://group7-tcss460-web-api-6a6786271b27.herokuapp.com/)
+## Team Contributions
+- **Bhavneet Bhargava** – Developed the routes as well as facilitated team meetings. 
+- **Ayub** – Implemented testing, and developed routes
+- **Andrew** – Set up heroku, and testing, as well as lead the team
+- **Bernard** – Worked on the database 
 
- ##Link to the API documentation
- [Github](https://ahwang5.github.io/TCSS-460-Web-API/)
+## Sprint Meetings
+- **Monday, April 14 (12:30 PM – 2:00 PM)** – Discord  
+- **Wednesday, April 16 (11:00 AM – 12:00 PM)** – Discord
+- **Saturday, April 19 (1:00 PM – 2:00 PM)** – Discord (Recap - Merge - Submit)
+- **Monday, April 21 (11:00 AM – 12:00 PM)** – Discord (Assign work, and get ready for beta sprint)
+- **Wednesday, April 23 (11:00 AM – 12:00 PM)** – Discord
+- **Saturday, April 26 (11:00 AM – 12:00 PM)** – Discord
+- **Sunday, April 27 (7:00 PM – 9:00 PM)** – Discord
 
-##Alpha Sprint Contribution
-- Andrew Hwang
-  - Hosted the GitHub repository on Heroku
-- Ayub Mohamed
-  - Facilitated meetings
-- Bernard Bega
-  - Helped hook up the repo on Heroko
-- Bhavneet Bhargava
-  - Ensured members were working to get the alpha submission completed as soon as possible 
+_The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
 
-##Alpha Sprint Meetings
-The primary form of communication between team members was Discord.
-
-##Alpha Sprint Comments
-n/a
-
-##Beta Sprint Contribution
-- Bernard Bega
-  - Worked on getting the sql for the database
+## Sprint Comments
+- Bhavneet's branch wasn't showing up, so he sent his code for the routes work to the team discord to submit, this was for the ISBN route, and the authors name
+- Earlier on the team was struggling with finding structure in how to split up work but over group calls and pair programming the team made lots of progress once everything was set up
+- Most notably there is a little confusion in the team about the Projects proper use of the stack
  
-##Beta Sprint Meetings
-The primary form of communication between team members was Discord and meeting up after class.
 
-##Beta Sprint Comments
-n/a
