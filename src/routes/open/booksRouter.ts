@@ -175,12 +175,16 @@ booksRouter.post(
   validateBookData,
   async (req: Request, res: Response) => {
     const { isbn13, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
+    // Generate a new ID since `id` has no default sequence
+    const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
+    const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
-      INSERT INTO books (isbn13, authors, publication_year, original_title, title, image_url, small_image_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO books (id, isbn13, authors, publication_year, original_title, title, image_url, image_small_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `;
     const sqlParams = [
+      newId,
       BigInt(isbn13),
       authors,
       publication_year,
