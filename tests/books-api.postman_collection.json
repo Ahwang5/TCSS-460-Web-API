@@ -66,6 +66,36 @@
           }
         }
       ]
+    },
+    {
+      "name": "Create Book",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"isbn13\":9780141036144,\"authors\":\"Test Author\",\"publication_year\":2022,\"original_title\":\"Original Test Book\",\"title\":\"Test Book\",\"image_url\":\"http://example.com/image.jpg\",\"small_image_url\":\"http://example.com/small.jpg\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books",
+          "host": ["{{baseUrl}}"],
+          "path": ["books"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has book object\", function () { pm.expect(pm.response.json()).to.have.property(\"book\"); });"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
