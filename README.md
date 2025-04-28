@@ -25,5 +25,8 @@ _The team used Discord voice chat for real-time communication and discussion dur
 - Bhavneet's branch wasn't showing up, so he sent his code for the routes work to the team discord to submit, this was for the ISBN route, and the authors name
 - Earlier on the team was struggling with finding structure in how to split up work but over group calls and pair programming the team made lots of progress once everything was set up
 - Most notably there is a little confusion in the team about the Projects proper use of the stack
- 
+
+
+ ![image](https://github.com/user-attachments/assets/f0b0b17d-f90c-4aa8-9613-97f0dd64479f)
+
 
