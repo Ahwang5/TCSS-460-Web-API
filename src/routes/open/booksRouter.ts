@@ -27,7 +27,9 @@ function validateIsbnFormat(req: Request, res: Response, next: NextFunction) {
  * Ensures that the author name is provided in the request body
  */
 function validateAuthorName(req: Request, res: Response, next: NextFunction) {
-  if (isStringProvided(req.body.author)) {
+  const rawAuthor = req.params.author;
+  const authorName = decodeURIComponent(rawAuthor);
+  if (isStringProvided(authorName)) {
     return next();
   }
   console.error('Author validation failed');
@@ -79,12 +81,12 @@ booksRouter.get(
   '/author/:author',
   validateAuthorName,
   async (req: Request, res: Response) => {
-    const authorName = req.params.author;
+    const rawAuthor = req.params.author;
+    const authorName = decodeURIComponent(rawAuthor);
     const sqlQuery = `
-      SELECT b.*
-        FROM books AS b
-        JOIN authors AS a ON b.book_id = a.book_id
-       WHERE a.author = $1
+      SELECT *
+        FROM books
+       WHERE authors ILIKE '%' || $1 || '%'
     `;
     const sqlParams = [authorName];
 

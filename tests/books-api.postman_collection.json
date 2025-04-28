@@ -12,9 +12,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/books/isbn/9780143126560",
+          "raw": "{{baseUrl}}/books/isbn/9780439554930",
           "host": ["{{baseUrl}}"],
-          "path": ["books", "isbn", "9780143126560"]
+          "path": ["books", "isbn", "9780439554930"]
         }
       },
       "event": [
@@ -71,7 +71,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000"
+      "value": "http://localhost:4001"
     }
   ]
 } 
