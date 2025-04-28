@@ -1,8 +1,8 @@
 # TCSS 460 – Alpha Sprint Web API Project
 
 ## Hosted Links
-- **Heroku-hosted Web API:** 
-- **GitHub Pages-hosted API Documentation:** 
+- **Heroku-hosted Web API:** [Heroku](https://group7-tcss460-web-api-6a6786271b27.herokuapp.com/)
+- **GitHub Pages-hosted API Documentation:** [Github](file:///D:/Users/TCSS-460-Web-API/docs/index.html)
 
 ## Team Contributions
 - **Bhavneet Bhargava** – Developed the routes as well as facilitated team meetings. 
