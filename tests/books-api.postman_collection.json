@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Books API Beta Sprint Tests",
+    "_postman_id": "7f8d9fae-1c3b-4b2a-8f5c-123456789abc",
+    "description": "Collection for Beta Sprint tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Book by ISBN",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/isbn/9780439554930",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "isbn", "9780439554930"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has book object\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"book\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Author",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/author/J.K.%20Rowling",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "author", "J.K.%20Rowling"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has books array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"books\");",
+              "    pm.expect(jsonData.books).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Book",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"isbn13\":9780141036144,\"authors\":\"Test Author\",\"publication_year\":2022,\"original_title\":\"Original Test Book\",\"title\":\"Test Book\",\"image_url\":\"http://example.com/image.jpg\",\"small_image_url\":\"http://example.com/small.jpg\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books",
+          "host": ["{{baseUrl}}"],
+          "path": ["books"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has book object\", function () { pm.expect(pm.response.json()).to.have.property(\"book\"); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4001"
+    }
+  ]
+} 
