@@ -96,6 +96,36 @@
           }
         }
       ]
+    },
+    {
+      "name": "Create Book Rating",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"book_id\":2,\"rating\":4.5}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/rating",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has rating object\", function () { pm.expect(pm.response.json()).to.have.property(\"rating\"); });"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
