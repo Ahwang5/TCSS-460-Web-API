@@ -58,6 +58,18 @@ function validateBookData(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
+ * Validates that the Book's Rating is between 0 and 5
+ * 
+ */
+function validateBookRating(req: Request, res: Response, next: NextFunction) {
+  const rating = req.body.rating;
+  if (rating < 0 || rating > 5) {
+    return res.status(400).json({ message: 'Invalid book rating – please check the docs.' });
+  }
+  next();
+}
+
+/**
  * @api {get} /books/author/:author   Get books by author
  * @apiName GetByAuthor
  * @apiGroup Books
@@ -204,4 +216,35 @@ booksRouter.post(
   }
 );
 
+/**
+ * @api {post} /books/rating       Create a book rating
+ * @apiName CreateBookRating
+ * @apiGroup Books
+ * 
+ */
+booksRouter.post(
+  '/rating',
+  validateBookRating,
+  async (req: Request, res: Response) => {
+    console.log('Rating endpoint hit with data:', req.body);  // Debug log
+    try {
+      const { book_id, rating } = req.body;
+      
+      const sqlQuery = `
+        INSERT INTO book_ratings (book_id, rating)
+        VALUES ($1, $2)
+        RETURNING *;
+      `;
+      const sqlParams = [book_id, rating];
+
+      console.log('Executing query:', sqlQuery, sqlParams);  // Debug log
+      const queryResult = await pool.query(sqlQuery, sqlParams);
+      console.log('Query result:', queryResult.rows[0]);  // Debug log
+      return res.status(201).json({ rating: queryResult.rows[0] });
+    } catch (err) {
+      console.error('Error creating book rating', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
 export { booksRouter }; 

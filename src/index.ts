@@ -17,6 +17,13 @@ app.use(express.json());
 
 app.use(routes);
 
+// Debug: Print all registered routes
+app._router.stack.forEach(function(r){
+    if (r.route && r.route.path){
+        console.log("Route:", r.route.path)
+    }
+});
+
 app.get('/', (request: Request, response: Response) => {
     response.send('<h1>Hello World!</h1><h2>Hello Heroku!</h2>');
 });
