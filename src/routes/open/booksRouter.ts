@@ -268,4 +268,55 @@ booksRouter.patch(
   }
 );
 
+/**
+ * @api {get} /books       Get all books with pagination
+ * @apiName GetAllBooks
+ * @apiGroup Books
+ * 
+ * @apiQuery {Number} [page=1]     Page number
+ * @apiQuery {Number} [limit=10]   Number of books per page
+ * 
+ * @apiSuccess {Object[]} books    Array of book records
+ * @apiSuccess {Number}   total    Total number of books
+ * @apiSuccess {Number}   page     Current page number
+ * @apiSuccess {Number}   limit    Number of books per page
+ * @apiSuccess {Number}   pages    Total number of pages
+ */
+booksRouter.get(
+  '/',
+  async (req: Request, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      // Get total count of books
+      const countQuery = 'SELECT COUNT(*) FROM books';
+      const countResult = await pool.query(countQuery);
+      const total = parseInt(countResult.rows[0].count);
+      const pages = Math.ceil(total / limit);
+
+      // Get paginated books
+      const booksQuery = `
+        SELECT *
+        FROM books
+        ORDER BY id
+        LIMIT $1 OFFSET $2
+      `;
+      const booksResult = await pool.query(booksQuery, [limit, offset]);
+
+      return res.json({
+        books: booksResult.rows.map(formatRecord),
+        total,
+        page,
+        limit,
+        pages
+      });
+    } catch (err) {
+      console.error('Error fetching books', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
 export { booksRouter }; 

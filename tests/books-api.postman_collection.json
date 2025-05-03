@@ -187,6 +187,79 @@
           }
         }
       ]
+    },
+    {
+      "name": "Get All Books with Pagination",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books?page=1&limit=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["books"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Response has books array\", function () { pm.expect(pm.response.json()).to.have.property(\"books\"); });",
+              "pm.test(\"Response has pagination info\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"total\");",
+              "    pm.expect(jsonData).to.have.property(\"page\");",
+              "    pm.expect(jsonData).to.have.property(\"limit\");",
+              "    pm.expect(jsonData).to.have.property(\"pages\");",
+              "});",
+              "pm.test(\"Books array length matches limit\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.books.length).to.equal(jsonData.limit);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Books with Default Pagination",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books",
+          "host": ["{{baseUrl}}"],
+          "path": ["books"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Response has books array\", function () { pm.expect(pm.response.json()).to.have.property(\"books\"); });",
+              "pm.test(\"Default limit is 10\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.limit).to.equal(10);",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
