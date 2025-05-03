@@ -42,9 +42,9 @@ function validateAuthorName(req: Request, res: Response, next: NextFunction) {
  * Validates required fields for creating a book
  */
 function validateBookData(req: Request, res: Response, next: NextFunction) {
-  const { isbn13, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
+  const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
   if (
-    !isNumberProvided(isbn13) ||
+    !isStringProvided(isbn) ||
     !isStringProvided(authors) ||
     !isNumberProvided(publication_year) ||
     !isStringProvided(original_title) ||
@@ -168,7 +168,7 @@ booksRouter.get(
  * @apiName CreateBook
  * @apiGroup Books
  *
- * @apiBody  {BigInt}  isbn13            10–13 digit ISBN
+ * @apiBody  {String}  isbn            10–13 digit ISBN
  * @apiBody  {String}  authors           Comma-separated author names
  * @apiBody  {Number}  publication_year  Publication year
  * @apiBody  {String}  original_title    Original title
@@ -185,7 +185,7 @@ booksRouter.post(
   '/',
   validateBookData,
   async (req: Request, res: Response) => {
-    const { isbn13, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
+    const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
     // Generate a new ID since `id` has no default sequence
     const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM Book');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
@@ -196,7 +196,7 @@ booksRouter.post(
     `;
     const sqlParams = [
       newId,
-      isbn13,
+      isbn.toString(),
       authors,
       publication_year,
       title,
@@ -314,6 +314,108 @@ booksRouter.get(
       });
     } catch (err) {
       console.error('Error fetching books', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
+/**
+ * @api {delete} /books/isbn/:isbn       Delete a book by ISBN
+ * @apiName DeleteByIsbn
+ * @apiGroup Books
+ *
+ * @apiParam  {String} isbn    10–13 digit ISBN
+ *
+ * @apiSuccess {String} message  "Book deleted successfully"
+ *
+ * @apiError   (400) {String} message  "Invalid ISBN format."
+ * @apiError   (404) {String} message  "Book not found"
+ * @apiError   (500) {String} message  "Server error – contact support"
+ */
+booksRouter.delete(
+  '/isbn/:isbn',
+  validateIsbnFormat,
+  async (req: Request, res: Response) => {
+    const isbnString = req.params.isbn;
+
+    try {
+      // First check if the book exists
+      const checkQuery = 'SELECT book_id FROM Book WHERE isbn = $1';
+      const checkResult = await pool.query(checkQuery, [isbnString]);
+      
+      if (checkResult.rowCount === 0) {
+        return res.status(404).json({ message: 'Book not found' });
+      }
+
+      const bookId = checkResult.rows[0].book_id;
+
+      // Delete ratings first (due to foreign key constraint)
+      const deleteRatingsQuery = 'DELETE FROM Book_Rating WHERE book_id = $1';
+      await pool.query(deleteRatingsQuery, [bookId]);
+
+      // Delete the book
+      const deleteQuery = 'DELETE FROM Book WHERE isbn = $1';
+      await pool.query(deleteQuery, [isbnString]);
+
+      return res.status(200).json({ message: 'Book deleted successfully' });
+    } catch (err) {
+      console.error('Error deleting book by ISBN', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
+/**
+ * @api {delete} /books/range       Delete books by ISBN range
+ * @apiName DeleteByRange
+ * @apiGroup Books
+ *
+ * @apiBody  {String}  start_isbn  Starting ISBN in range
+ * @apiBody  {String}  end_isbn    Ending ISBN in range
+ *
+ * @apiSuccess {String} message        "Books deleted successfully"
+ * @apiSuccess {Number} deleted_count  Number of books deleted
+ * @apiSuccess {String[]} deleted_isbns  List of deleted book ISBNs
+ *
+ * @apiError   (400) {String} message  "Missing start_isbn or end_isbn"
+ * @apiError   (404) {String} message  "No books found in range"
+ * @apiError   (500) {String} message  "Server error – contact support"
+ */
+booksRouter.delete(
+  '/range',
+  async (req: Request, res: Response) => {
+    const { start_isbn, end_isbn } = req.body;
+
+    if (!start_isbn || !end_isbn) {
+      return res.status(400).json({ message: 'Missing start_isbn or end_isbn' });
+    }
+
+    try {
+      // First get all book IDs in the range
+      const getBooksQuery = 'SELECT book_id FROM Book WHERE isbn BETWEEN $1 AND $2';
+      const booksResult = await pool.query(getBooksQuery, [start_isbn.toString(), end_isbn.toString()]);
+
+      if (booksResult.rowCount === 0) {
+        return res.status(404).json({ message: 'No books found in range' });
+      }
+
+      const bookIds = booksResult.rows.map(row => row.book_id);
+
+      // Delete ratings first (due to foreign key constraint)
+      const deleteRatingsQuery = 'DELETE FROM Book_Rating WHERE book_id = ANY($1)';
+      await pool.query(deleteRatingsQuery, [bookIds]);
+
+      // Delete books in range and return their ISBNs
+      const deleteQuery = 'DELETE FROM Book WHERE book_id = ANY($1) RETURNING isbn';
+      const result = await pool.query(deleteQuery, [bookIds]);
+
+      return res.status(200).json({
+        message: 'Books deleted successfully',
+        deleted_count: result.rowCount,
+        deleted_isbns: result.rows.map(row => row.isbn)
+      });
+    } catch (err) {
+      console.error('Error deleting books by range', err);
       res.status(500).json({ message: 'Server error – contact support' });
     }
   }

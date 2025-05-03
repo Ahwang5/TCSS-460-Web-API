@@ -298,7 +298,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"isbn13\":9780141036144,\"authors\":\"Test Author\",\"publication_year\":2022,\"original_title\":\"Original Test Book\",\"title\":\"Test Book\",\"image_url\":\"http://example.com/image.jpg\",\"small_image_url\":\"http://example.com/small.jpg\"}"
+          "raw": "{\"isbn\":\"9780141036144\",\"authors\":\"Test Author\",\"publication_year\":2022,\"original_title\":\"Original Test Book\",\"title\":\"Test Book\",\"image_url\":\"http://example.com/image.jpg\",\"small_image_url\":\"http://example.com/small.jpg\"}"
         },
         "url": {
           "raw": "{{baseUrl}}/books",
@@ -482,6 +482,191 @@
           }
         }
       ]
+    },
+    {
+      "name": "Delete Book by ISBN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has success message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Book deleted successfully');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/isbn/9780439554930",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "isbn", "9780439554930"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Book by ISBN - Not Found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Book not found');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/isbn/9999999999999",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "isbn", "9999999999999"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Books by Range",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has success message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Books deleted successfully');",
+              "});",
+              "",
+              "pm.test(\"Response has deleted count\", function () {",
+              "    pm.response.to.have.jsonBody('deleted_count');",
+              "});",
+              "",
+              "pm.test(\"Response has deleted ISBNs\", function () {",
+              "    pm.response.to.have.jsonBody('deleted_isbns');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"start_isbn\":\"9780439064873\",\"end_isbn\":\"9780439139601\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/range",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "range"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Books by Range - Invalid Input",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Missing start_isbn or end_isbn');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/range",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "range"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Books by Range - No Books Found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'No books found in range');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"start_isbn\":\"9780439554930\",\"end_isbn\":\"9780439136365\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/range",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "range"]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
