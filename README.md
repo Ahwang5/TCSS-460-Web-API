@@ -41,6 +41,6 @@ _The team used Discord voice chat for real-time communication and discussion dur
 - Provided guidance and support to team members on API development
 
 
- ![image](https://github.com/user-attachments/assets/f0b0b17d-f90c-4aa8-9613-97f0dd64479f)
+![image](https://github.com/user-attachments/assets/4625cbd0-aff2-404b-981a-706b77402cc4)
 
 
