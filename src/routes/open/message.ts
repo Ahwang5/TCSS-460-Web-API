@@ -1,11 +1,10 @@
 //express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
-import { pool, validationFunctions } from '../../core/utilities';
+import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
+import { IMessage } from '../../types';
 
 const messageRouter: Router = express.Router();
-
-const isStringProvided = validationFunctions.isStringProvided;
 
 const format = (resultRow) =>
     `{${resultRow.priority}} - [${resultRow.name}] says: ${resultRow.message}`;
@@ -22,7 +21,7 @@ function mwValidPriorityQuery(
 ) {
     const priority: string = request.query.priority as string;
     if (
-        validationFunctions.isNumberProvided(priority) &&
+        isNumberProvided(priority) &&
         parseInt(priority) >= 1 &&
         parseInt(priority) <= 3
     ) {
@@ -86,7 +85,7 @@ messageRouter.post(
     (request: Request, response: Response, next: NextFunction) => {
         const priority: string = request.body.priority as string;
         if (
-            validationFunctions.isNumberProvided(priority) &&
+            isNumberProvided(priority) &&
             parseInt(priority) >= 1 &&
             parseInt(priority) <= 3
         ) {

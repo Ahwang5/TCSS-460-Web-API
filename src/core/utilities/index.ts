@@ -1,7 +1,11 @@
 import { pool } from './sql_conn';
-
-import { validationFunctions } from './validationUtils';
-
+import { isStringProvided, isNumberProvided, validationMiddleware } from './validationUtils';
 import { credentialingFunctions } from './credentialingUtils';
 
-export { pool, credentialingFunctions, validationFunctions };
+export { 
+    pool, 
+    credentialingFunctions, 
+    isStringProvided,
+    isNumberProvided,
+    validationMiddleware 
+};

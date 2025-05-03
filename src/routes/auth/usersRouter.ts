@@ -1,10 +1,9 @@
-import express, { Request, Response, Router } from 'express';
-import { pool, validationFunctions, credentialingFunctions } from '../../core/utilities';
-import { AuthenticatedRequest } from '../../../src/types';
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { pool, isStringProvided, credentialingFunctions } from '../../core/utilities';
+import { AuthenticatedRequest } from '../../types';
 import { authenticateToken } from '../../middleware/auth';
 
 const usersRouter: Router = express.Router();
-const { isStringProvided } = validationFunctions;
 const { generateHash } = credentialingFunctions;
 
 /**

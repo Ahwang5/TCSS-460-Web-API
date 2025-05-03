@@ -1,17 +1,15 @@
 //express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
-import { pool, validationFunctions } from '../../core/utilities';
+import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
+import { authenticateToken } from '../../middleware/auth';
 
-const messageRouter: Router = express.Router();
+const closedMessageRouter: Router = express.Router();
 
 const format = (resultRow) => ({
     ...resultRow,
     formatted: `{${resultRow.priority}} - [${resultRow.name}] says: ${resultRow.message}`,
 });
-
-const isStringProvided = validationFunctions.isStringProvided;
-const isNumberProvided = validationFunctions.isNumberProvided;
 
 /**
  * @apiDefine JWT
@@ -50,7 +48,7 @@ const isNumberProvided = validationFunctions.isNumberProvided;
  *      "{<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
  *
  */
-messageRouter.get('/offset', async (request: Request, response: Response) => {
+closedMessageRouter.get('/offset', async (request: Request, response: Response) => {
     /*
      * NOTE: Using OFFSET in the query can lead to poor performance on large datasets as
      * the DBMS has to scan all of the results up to the offset to "get" to it.
@@ -129,7 +127,7 @@ messageRouter.get('/offset', async (request: Request, response: Response) => {
  *      "{<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
  *
  */
-messageRouter.get('/cursor', async (request: Request, response: Response) => {
+closedMessageRouter.get('/cursor', async (request: Request, response: Response) => {
     const theQuery = `SELECT name, message, priority, DemoID 
                         FROM Demo
                         WHERE DemoID > $2  
@@ -195,7 +193,7 @@ messageRouter.get('/cursor', async (request: Request, response: Response) => {
  * @apiError (400: Invalid Priority) {String} message "Invalid or missing Priority  - please refer to documentation"
  * @apiError (400: JSON Error) {String} message "malformed JSON in parameters"
  */
-messageRouter.post(
+closedMessageRouter.post(
     '/',
     (request: Request, response: Response, next: NextFunction) => {
         if (
@@ -214,7 +212,7 @@ messageRouter.post(
     (request: Request, response: Response, next: NextFunction) => {
         const priority: string = request.body.priority as string;
         if (
-            validationFunctions.isNumberProvided(priority) &&
+            isNumberProvided(priority) &&
             parseInt(priority) >= 1 &&
             parseInt(priority) <= 3
         ) {
@@ -280,7 +278,7 @@ messageRouter.post(
  *
  * @apiError (404: Name Not Found) {String} message "Name not found"
  */
-messageRouter.delete('/:name', async (request: Request, response: Response) => {
+closedMessageRouter.delete('/:name', async (request: Request, response: Response) => {
     const theQuery = 'DELETE FROM Demo  WHERE name = $1 RETURNING *';
     const values = [request.params.name];
 
@@ -306,4 +304,4 @@ messageRouter.delete('/:name', async (request: Request, response: Response) => {
 });
 
 // "return" the router
-export { messageRouter };
+export { closedMessageRouter };

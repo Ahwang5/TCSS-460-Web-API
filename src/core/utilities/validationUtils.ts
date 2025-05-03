@@ -1,3 +1,5 @@
+import { Request, Response, NextFunction } from 'express';
+
 /**
  * Checks the parameter to see if it is a a String.
  *
@@ -14,7 +16,7 @@ function isString(candidate: any): candidate is string {
  * @param {any} candidate the value to check
  * @returns true if the parameter is a String with a length greater than 0, false otherwise
  */
-function isStringProvided(candidate: any): boolean {
+export function isStringProvided(candidate: any): boolean {
     return isString(candidate) && candidate.length > 0;
 }
 
@@ -24,7 +26,7 @@ function isStringProvided(candidate: any): boolean {
  * @param {any} candidate the value to check
  * @returns true if the parameter is a number, false otherwise
  */
-function isNumberProvided(candidate: any): boolean {
+export function isNumberProvided(candidate: any): boolean {
     return (
         isNumber(candidate) ||
         (candidate != null &&
@@ -46,9 +48,20 @@ function isNumber(x: any): x is number {
 // for example: isNumericProvided, isValidPassword, isValidEmail, etc
 // don't forget to export any
 
-const validationFunctions = {
-    isStringProvided,
-    isNumberProvided,
-};
+export const validationMiddleware = {
+    validateRatingParam: (req: Request, res: Response, next: NextFunction) => {
+        const rating = parseFloat(req.params.rating);
+        if (isNaN(rating) || rating < 0 || rating > 5) {
+            return res.status(400).json({ error: 'Rating must be a number between 0 and 5' });
+        }
+        next();
+    },
 
-export { validationFunctions };
+    validateYear: (req: Request, res: Response, next: NextFunction) => {
+        const year = parseInt(req.params.year);
+        if (isNaN(year) || year < 0) {
+            return res.status(400).json({ error: 'Year must be a positive number' });
+        }
+        next();
+    }
+};

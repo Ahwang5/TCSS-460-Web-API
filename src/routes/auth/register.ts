@@ -9,12 +9,11 @@ const key = {
 
 import {
     pool,
-    validationFunctions,
+    isStringProvided,
+    isNumberProvided,
     credentialingFunctions,
 } from '../../core/utilities';
 
-const isStringProvided = validationFunctions.isStringProvided;
-const isNumberProvided = validationFunctions.isNumberProvided;
 const generateHash = credentialingFunctions.generateHash;
 const generateSalt = credentialingFunctions.generateSalt;
 
@@ -37,7 +36,7 @@ const isValidPhone = (phone: string): boolean =>
 // Add more/your own role validation here. The *rules* must be documented
 // and the client-side validation should match these rules.
 const isValidRole = (priority: string): boolean =>
-    validationFunctions.isNumberProvided(priority) &&
+    isNumberProvided(priority) &&
     parseInt(priority) >= 1 &&
     parseInt(priority) <= 5;
 

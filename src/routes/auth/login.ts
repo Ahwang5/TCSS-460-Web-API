@@ -5,9 +5,13 @@ import jwt from 'jsonwebtoken';
 
 import {
     pool,
-    validationFunctions,
+    isStringProvided,
     credentialingFunctions,
 } from '../../core/utilities';
+
+const generateHash = credentialingFunctions.generateHash;
+
+const signinRouter: Router = Router();
 
 export interface Auth {
     email: string;
@@ -17,11 +21,6 @@ export interface Auth {
 export interface AuthRequest extends Request {
     auth: Auth;
 }
-
-const isStringProvided = validationFunctions.isStringProvided;
-const generateHash = credentialingFunctions.generateHash;
-
-const signinRouter: Router = express.Router();
 
 const key = {
     secret: process.env.JWT_SECRET,
