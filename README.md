@@ -16,9 +16,9 @@
   - API documentation
   - Database connection and query optimization
   - Facilitated team meetings and code reviews
-- **Ayub** – Implemented testing, and developed routes
-- **Andrew** – Set up heroku, and testing, as well as lead the team
-- **Bernard** – Worked on the database 
+- **Ayub** – Worked on some testing and routes
+- **Andrew** – Set up heroku, and led team
+- **Bernard** – Worked on some database
 
 ## Sprint Meetings
 - **Monday, April 14 (12:30 PM – 2:00 PM)** – Discord  

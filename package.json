@@ -16,7 +16,9 @@
         "test:e2e": "start-server-and-test \"npm run local\" http://localhost:4001 \"npm run test:postman\"",
         "format:check": "prettier --check .",
         "format:write": "prettier --write .",
-        "deploy": "git add . && git commit -m Heroku && git push heroku master"
+        "deploy": "git add . && git commit -m Heroku && git push heroku master",
+        "docs": "apidoc -i src/ -o docs/",
+        "docs:deploy": "npm run docs && git add docs/ && git commit -m 'Update API documentation' && git push origin main"
     },
     "keywords": [],
     "author": "Charles Bryan",

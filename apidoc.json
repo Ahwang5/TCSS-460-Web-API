@@ -1,9 +1,14 @@
 {
-    "name": "TCSS 460 BE Phase 2",
-    "version": "0.1.0",
-    "description": "TCSS 460 Second Node/Express Rest Web API, includes DB and Auth examples",
-    "title": "TCSS 460 Rest Web API",
-    "url": "localhost:4000",
+    "name": "TCSS 460 Web API",
+    "version": "1.0.0",
+    "description": "Web API for managing books with authentication",
+    "title": "TCSS 460 Web API Documentation",
+    "url": "https://ahwang5.github.io/TCSS-460-Web-API",
+    "sampleUrl": "https://group7-tcss460-web-api-6a6786271b27.herokuapp.com",
+    "template": {
+        "withCompare": true,
+        "withGenerator": true
+    },
     "order": [
         "PostMessage",
         "GetAllMessages",
