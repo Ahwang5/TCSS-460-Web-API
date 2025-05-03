@@ -217,34 +217,55 @@ booksRouter.post(
 );
 
 /**
- * @api {post} /books/rating       Create a book rating
- * @apiName CreateBookRating
+ * @api {patch} /books/rating       Update a book rating
+ * @apiName UpdateBookRating
  * @apiGroup Books
  * 
+ * @apiBody  {Number}  book_id     ID of the book to update rating for
+ * @apiBody  {Number}  rating      New rating value (0-5)
+ * 
+ * @apiSuccess (200) {Object} rating        The updated rating record
+ * 
+ * @apiError   (400) {String} message       Invalid rating value
+ * @apiError   (404) {String} message       Book not found
+ * @apiError   (500) {String} message       Server error – contact support
  */
-booksRouter.post(
+booksRouter.patch(
   '/rating',
   validateBookRating,
   async (req: Request, res: Response) => {
-    console.log('Rating endpoint hit with data:', req.body);  // Debug log
+    console.log('Rating update endpoint hit with data:', req.body);
     try {
       const { book_id, rating } = req.body;
+
+      // First check if the book exists
+      const bookCheckQuery = 'SELECT id FROM books WHERE id = $1';
+      const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
       
+      if (bookCheckResult.rowCount === 0) {
+        return res.status(404).json({ message: 'Book not found' });
+      }
+
+      // Update or insert the rating
       const sqlQuery = `
         INSERT INTO book_ratings (book_id, rating)
         VALUES ($1, $2)
+        ON CONFLICT (book_id) 
+        DO UPDATE SET rating = $2
         RETURNING *;
       `;
       const sqlParams = [book_id, rating];
 
-      console.log('Executing query:', sqlQuery, sqlParams);  // Debug log
+      console.log('Executing query:', sqlQuery, sqlParams);
       const queryResult = await pool.query(sqlQuery, sqlParams);
-      console.log('Query result:', queryResult.rows[0]);  // Debug log
-      return res.status(201).json({ rating: queryResult.rows[0] });
+      console.log('Query result:', queryResult.rows[0]);
+      
+      return res.status(200).json({ rating: queryResult.rows[0] });
     } catch (err) {
-      console.error('Error creating book rating', err);
+      console.error('Error updating book rating', err);
       res.status(500).json({ message: 'Server error – contact support' });
     }
   }
 );
+
 export { booksRouter }; 

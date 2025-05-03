@@ -98,9 +98,9 @@
       ]
     },
     {
-      "name": "Create Book Rating",
+      "name": "Update Book Rating",
       "request": {
-        "method": "POST",
+        "method": "PATCH",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
@@ -120,8 +120,69 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
-              "pm.test(\"Response has rating object\", function () { pm.expect(pm.response.json()).to.have.property(\"rating\"); });"
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Response has rating object\", function () { pm.expect(pm.response.json()).to.have.property(\"rating\"); });",
+              "pm.test(\"Rating value is correct\", function () { pm.expect(parseFloat(pm.response.json().rating.rating)).to.equal(4.5); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Book Rating - Invalid Book",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"book_id\":999999,\"rating\":4.5}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/rating",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404\", function () { pm.response.to.have.status(404); });",
+              "pm.test(\"Response has error message\", function () { pm.expect(pm.response.json()).to.have.property(\"message\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Book Rating - Invalid Rating",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"book_id\":2,\"rating\":6}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/books/rating",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"Response has error message\", function () { pm.expect(pm.response.json()).to.have.property(\"message\"); });"
             ]
           }
         }

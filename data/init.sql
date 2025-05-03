@@ -42,7 +42,7 @@ CREATE TABLE BOOKS (id INT PRIMARY KEY,
 
 CREATE TABLE book_ratings (
     id SERIAL PRIMARY KEY,
-    book_id INT NOT NULL,
+    book_id INT NOT NULL UNIQUE,
     rating DECIMAL(2,1) NOT NULL CHECK (rating >= 0 AND rating <= 5),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (book_id) REFERENCES books(id)
