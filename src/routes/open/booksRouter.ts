@@ -421,4 +421,195 @@ booksRouter.delete(
   }
 );
 
+/**
+ * Ensures that the title is provided in the request params
+ */
+function validateTitle(req: Request, res: Response, next: NextFunction) {
+  const rawTitle = req.params.title;
+  const title = decodeURIComponent(rawTitle);
+  if (isStringProvided(title)) {
+    return next();
+  }
+  console.error('Title validation failed');
+  res
+    .status(400)
+    .json({ message: 'Invalid title – please check the docs.' });
+}
+
+/**
+ * @api {get} /books/title/:title   Get books by title
+ * @apiName GetByTitle
+ * @apiGroup Books
+ *
+ * @apiParam  {String} title   URL-encoded book title
+ *
+ * @apiSuccess {Object[]} books     Matching book records
+ * @apiSuccess {Number}   books.book_id
+ * @apiSuccess {String}   books.isbn
+ * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {String}   books.title
+ * @apiSuccess {String}   books.image_url
+ * @apiSuccess {String}   books.small_image_url
+ * @apiSuccess {String}   books.formatted
+ *
+ * @apiError   (404) {String} message  "No books found with that title"
+ * @apiError   (500) {String} message  "Server error – contact support"
+ */
+booksRouter.get(
+  '/title/:title',
+  validateTitle,
+  async (req: Request, res: Response) => {
+    const rawTitle = req.params.title;
+    const title = decodeURIComponent(rawTitle);
+    const sqlQuery = `
+      SELECT *
+        FROM Book
+       WHERE title ILIKE '%' || $1 || '%'
+    `;
+    const sqlParams = [title];
+
+    try {
+      const queryResult = await pool.query(sqlQuery, sqlParams);
+      if (queryResult.rowCount > 0) {
+        return res.json({
+          books: queryResult.rows.map(formatRecord),
+        });
+      }
+      res.status(404).json({ message: 'No books found with that title' });
+    } catch (err) {
+      console.error('Error fetching books by title', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
+/**
+ * Validates that the rating is a number between 1 and 5
+ */
+function validateRatingParam(req: Request, res: Response, next: NextFunction) {
+  const rating = parseFloat(req.params.rating);
+  if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+    return next();
+  }
+  console.error('Rating validation failed');
+  res
+    .status(400)
+    .json({ message: 'Invalid rating – must be between 1 and 5.' });
+}
+
+/**
+ * @api {get} /books/rating/:rating   Get books by rating
+ * @apiName GetByRating
+ * @apiGroup Books
+ *
+ * @apiParam  {Number} rating   Rating value (1-5)
+ *
+ * @apiSuccess {Object[]} books     Matching book records
+ * @apiSuccess {Number}   books.book_id
+ * @apiSuccess {String}   books.isbn
+ * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {String}   books.title
+ * @apiSuccess {String}   books.image_url
+ * @apiSuccess {String}   books.small_image_url
+ * @apiSuccess {String}   books.formatted
+ * @apiSuccess {Number}   books.average_rating
+ *
+ * @apiError   (400) {String} message  "Invalid rating – must be between 1 and 5"
+ * @apiError   (404) {String} message  "No books found with that rating"
+ * @apiError   (500) {String} message  "Server error – contact support"
+ */
+booksRouter.get(
+  '/rating/:rating',
+  validateRatingParam,
+  async (req: Request, res: Response) => {
+    const rating = parseFloat(req.params.rating);
+    const sqlQuery = `
+      SELECT b.*, 
+             COALESCE(AVG(br.rating), 0) as average_rating
+        FROM Book b
+        LEFT JOIN Book_Rating br ON b.book_id = br.book_id
+       GROUP BY b.book_id
+      HAVING ROUND(COALESCE(AVG(br.rating), 0)) = $1
+       ORDER BY average_rating DESC
+    `;
+    const sqlParams = [rating];
+
+    try {
+      const queryResult = await pool.query(sqlQuery, sqlParams);
+      if (queryResult.rowCount === 0) {
+        return res.status(404).json({ message: 'No books found with that rating' });
+      }
+      return res.json({
+        books: queryResult.rows.map(formatRecord),
+      });
+    } catch (err) {
+      console.error('Error fetching books by rating', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
+/**
+ * Validates that the year is a valid number
+ */
+function validateYear(req: Request, res: Response, next: NextFunction) {
+  const year = parseInt(req.params.year);
+  if (!isNaN(year) && year > 0) {
+    return next();
+  }
+  console.error('Year validation failed');
+  res
+    .status(400)
+    .json({ message: 'Invalid year – must be a positive number.' });
+}
+
+/**
+ * @api {get} /books/year/:year   Get books by publication year
+ * @apiName GetByYear
+ * @apiGroup Books
+ *
+ * @apiParam  {Number} year   Publication year
+ *
+ * @apiSuccess {Object[]} books     Matching book records
+ * @apiSuccess {Number}   books.book_id
+ * @apiSuccess {String}   books.isbn
+ * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {String}   books.original_title
+ * @apiSuccess {String}   books.title
+ * @apiSuccess {String}   books.image_url
+ * @apiSuccess {String}   books.small_image_url
+ * @apiSuccess {String}   books.formatted
+ *
+ * @apiError   (400) {String} message  "Invalid year – must be a positive number"
+ * @apiError   (404) {String} message  "No books found from that year"
+ * @apiError   (500) {String} message  "Server error – contact support"
+ */
+booksRouter.get(
+  '/year/:year',
+  validateYear,
+  async (req: Request, res: Response) => {
+    const year = parseInt(req.params.year);
+    const sqlQuery = `
+      SELECT *
+        FROM Book
+       WHERE publication_year = $1
+       ORDER BY title
+    `;
+    const sqlParams = [year];
+
+    try {
+      const queryResult = await pool.query(sqlQuery, sqlParams);
+      if (queryResult.rowCount > 0) {
+        return res.json({
+          books: queryResult.rows.map(formatRecord),
+        });
+      }
+      res.status(404).json({ message: 'No books found from that year' });
+    } catch (err) {
+      console.error('Error fetching books by year', err);
+      res.status(500).json({ message: 'Server error – contact support' });
+    }
+  }
+);
+
 export { booksRouter }; 

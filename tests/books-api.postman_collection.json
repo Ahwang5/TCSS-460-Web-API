@@ -667,6 +667,249 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Get Books by Title",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/title/Harry%20Potter",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "title", "Harry%20Potter"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has books array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"books\");",
+              "    pm.expect(jsonData.books).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Title - Not Found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/title/NonexistentBookTitle",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "title", "NonexistentBookTitle"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'No books found with that title');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Rating",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/rating/4",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating", "4"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has books array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"books\");",
+              "    pm.expect(jsonData.books).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Rating - Invalid Rating",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/rating/6",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating", "6"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Invalid rating – must be between 1 and 5.');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Rating - Not Found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/rating/2",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "rating", "2"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'No books found with that rating');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Year",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/year/2005",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "year", "2005"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has books array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"books\");",
+              "    pm.expect(jsonData.books).to.be.an(\"array\");",
+              "});",
+              "",
+              "pm.test(\"Book is from 2005\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.books[0].publication_year).to.equal(2005);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Year - Invalid Year",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/year/-1",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "year", "-1"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'Invalid year – must be a positive number.');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Books by Year - Not Found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/books/year/3000",
+          "host": ["{{baseUrl}}"],
+          "path": ["books", "year", "3000"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    pm.response.to.have.jsonBody('message', 'No books found from that year');",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
