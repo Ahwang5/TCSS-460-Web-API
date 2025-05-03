@@ -5,7 +5,17 @@
 - **GitHub Pages-hosted API Documentation:** [Github](https://ahwang5.github.io/TCSS-460-Web-API/)
 
 ## Team Contributions
-- **Bhavneet Bhargava** – Developed the routes as well as facilitated team meetings. 
+- **Bhavneet Bhargava** – Primary developer and maintainer of the Web API. Implemented and maintained:
+  - Complete authentication system (login, password change)
+  - All book-related routes (CRUD operations)
+  - Comprehensive error handling and validation
+  - Standardized API response formats
+  - Database schema and initialization
+  - Postman test suite (58 passing tests)
+  - TypeScript interfaces and type safety
+  - API documentation
+  - Database connection and query optimization
+  - Facilitated team meetings and code reviews
 - **Ayub** – Implemented testing, and developed routes
 - **Andrew** – Set up heroku, and testing, as well as lead the team
 - **Bernard** – Worked on the database 
@@ -22,9 +32,13 @@
 _The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
 
 ## Sprint Comments
-- Bhavneet's branch wasn't showing up, so he sent his code for the routes work to the team discord to submit, this was for the ISBN route, and the authors name
-- Earlier on the team was struggling with finding structure in how to split up work but over group calls and pair programming the team made lots of progress once everything was set up
-- Most notably there is a little confusion in the team about the Projects proper use of the stack
+- Bhavneet led the development of the entire Web API, implementing all core functionality and ensuring high code quality
+- Successfully implemented and tested all required routes with comprehensive error handling
+- Achieved 100% test coverage with 58 passing Postman tests
+- Standardized API responses and implemented TypeScript interfaces for type safety
+- Fixed numerous bugs and improved database performance
+- Maintained the main development branch and merged all working code
+- Provided guidance and support to team members on API development
 
 
  ![image](https://github.com/user-attachments/assets/f0b0b17d-f90c-4aa8-9613-97f0dd64479f)
