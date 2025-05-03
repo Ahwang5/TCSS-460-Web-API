@@ -28,6 +28,9 @@
 - **Wednesday, April 23 (11:00 AM – 12:00 PM)** – Discord (Discussed and submitted alpha sprint, discussed beta ,sprint and divided work) 
 - **Saturday, April 26 (11:00 AM – 12:00 PM)** – Discord (Discussed issues with connecting the database to the csv file.)
 - **Sunday, April 27 (7:00 PM – 9:00 PM)** – Discord (Discussed and worked on routes and testing for the beta sprint)
+- **Tuesday, April 29 (During Class and After Class)** – Met up and worked on the new Beta Sprint
+- **Thursday, May  1 (7:00 PM – 9:00 PM)** – Discord (Discussed and worked on the new routes
+- **Saturday, May 3 (7:00 PM – 9:00 PM)** – Discord (Merge - Submit)
 
 _The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
 
