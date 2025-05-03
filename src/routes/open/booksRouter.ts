@@ -9,7 +9,7 @@ const { isStringProvided, isNumberProvided } = validationFunctions;
  */
 const formatRecord = (row: any) => ({
   ...row,
-  formatted: `{${row.isbn13}} – ${row.title}`,
+  formatted: `{${row.isbn}} – ${row.title}`,
 });
 
 /**
@@ -97,8 +97,8 @@ booksRouter.get(
     const authorName = decodeURIComponent(rawAuthor);
     const sqlQuery = `
       SELECT *
-        FROM books
-       WHERE authors ILIKE '%' || $1 || '%'
+        FROM Book
+       WHERE author ILIKE '%' || $1 || '%'
     `;
     const sqlParams = [authorName];
 
@@ -142,14 +142,13 @@ booksRouter.get(
   validateIsbnFormat,
   async (req: Request, res: Response) => {
     const isbnString = req.params.isbn;
-    const isbnNumeric = BigInt(isbnString);
 
     const sqlQuery = `
       SELECT *
-        FROM books
-       WHERE isbn13 = $1
+        FROM Book
+       WHERE isbn = $1
     `;
-    const sqlParams = [isbnNumeric];
+    const sqlParams = [isbnString];
 
     try {
       const queryResult = await pool.query(sqlQuery, sqlParams);
@@ -188,22 +187,23 @@ booksRouter.post(
   async (req: Request, res: Response) => {
     const { isbn13, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
     // Generate a new ID since `id` has no default sequence
-    const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
+    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM Book');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
-      INSERT INTO books (id, isbn13, authors, publication_year, original_title, title, image_url, image_small_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO Book (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *;
     `;
     const sqlParams = [
       newId,
-      BigInt(isbn13),
+      isbn13,
       authors,
       publication_year,
-      original_title,
       title,
-      image_url,
-      small_image_url,
+      original_title,
+      'Unknown',
+      9.99,
+      100
     ];
 
     try {
@@ -239,7 +239,7 @@ booksRouter.patch(
       const { book_id, rating } = req.body;
 
       // First check if the book exists
-      const bookCheckQuery = 'SELECT id FROM books WHERE id = $1';
+      const bookCheckQuery = 'SELECT book_id FROM Book WHERE book_id = $1';
       const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
       
       if (bookCheckResult.rowCount === 0) {
@@ -248,9 +248,9 @@ booksRouter.patch(
 
       // Update or insert the rating
       const sqlQuery = `
-        INSERT INTO book_ratings (book_id, rating)
-        VALUES ($1, $2)
-        ON CONFLICT (book_id) 
+        INSERT INTO Book_Rating (book_id, account_id, rating, review_text)
+        VALUES ($1, 1, $2, 'Updated via API')
+        ON CONFLICT (book_id, account_id) 
         DO UPDATE SET rating = $2
         RETURNING *;
       `;
@@ -291,7 +291,7 @@ booksRouter.get(
       const offset = (page - 1) * limit;
 
       // Get total count of books
-      const countQuery = 'SELECT COUNT(*) FROM books';
+      const countQuery = 'SELECT COUNT(*) FROM Book';
       const countResult = await pool.query(countQuery);
       const total = parseInt(countResult.rows[0].count);
       const pages = Math.ceil(total / limit);
@@ -299,8 +299,8 @@ booksRouter.get(
       // Get paginated books
       const booksQuery = `
         SELECT *
-        FROM books
-        ORDER BY id
+        FROM Book
+        ORDER BY book_id
         LIMIT $1 OFFSET $2
       `;
       const booksResult = await pool.query(booksQuery, [limit, offset]);

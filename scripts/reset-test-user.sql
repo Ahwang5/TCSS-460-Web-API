@@ -1,0 +1,1 @@
+SELECT reset_test_user(); 

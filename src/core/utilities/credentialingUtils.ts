@@ -7,11 +7,17 @@ import crypto from 'crypto';
  * @param {string} pw the password to hash
  * @param {string} salt the salt to use when hashing
  */
-const generateHash = (pw: string, salt: string) =>
-    crypto
-        .createHash('sha256')
-        .update(pw + salt)
-        .digest('hex');
+const generateHash = (pw: string, salt: string) => {
+    console.log('Debug - Input password:', pw);
+    console.log('Debug - Input salt:', salt);
+    const hash = crypto.createHash('md5');
+    const input = pw + salt;
+    console.log('Debug - Combined input:', input);
+    hash.update(input);
+    const result = hash.digest('hex');
+    console.log('Debug - Generated hash:', result);
+    return result;
+};
 
 /**
  * Creates a random string of hexadecimal characters with the length of size.

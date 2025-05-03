@@ -24,7 +24,7 @@ const generateHash = credentialingFunctions.generateHash;
 const signinRouter: Router = express.Router();
 
 const key = {
-    secret: process.env.JSON_WEB_TOKEN,
+    secret: process.env.JWT_SECRET,
 };
 
 /**
@@ -64,7 +64,8 @@ signinRouter.post(
         }
     },
     (request: AuthRequest, response: Response) => {
-        const theQuery = `SELECT salted_hash, salt, Account_Credential.account_id, account.email, account.firstname, account.lastname, account.phone, account.username, account.account_role FROM Account_Credential
+        const theQuery = `SELECT salted_hash, salt, Account_Credential.account_id, account.email, account.firstname, account.account_role 
+                      FROM Account_Credential
                       INNER JOIN Account ON
                       Account_Credential.account_id=Account.account_id 
                       WHERE Account.email=$1`;
@@ -100,6 +101,11 @@ signinRouter.post(
                     salt
                 );
 
+                console.log('Debug - Password:', request.body.password);
+                console.log('Debug - Salt:', salt);
+                console.log('Debug - Stored Hash:', storedSaltedHash);
+                console.log('Debug - Generated Hash:', providedSaltedHash);
+
                 //Did our salted hash match their salted hash?
                 if (storedSaltedHash === providedSaltedHash) {
                     //credentials match. get a new JWT
@@ -115,17 +121,13 @@ signinRouter.post(
                         }
                     );
                     //package and send the results
-                    // response.json({
-                    //     accessToken,
-                    //     id: result.rows[0].account_id,
-                    // });
                     response.json({
                         accessToken,
                         user: {
                             id: result.rows[0].account_id,
                             email: result.rows[0].email,
                             name: result.rows[0].firstname,
-                            role: 'Admin',
+                            role: result.rows[0].account_role,
                         },
                     });
                 } else {
