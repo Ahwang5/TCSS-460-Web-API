@@ -31,6 +31,8 @@
 - **Tuesday, April 29 (During Class and After Class)** – Met up and worked on the new Beta Sprint
 - **Thursday, May  1 (7:00 PM – 9:00 PM)** – Discord (Discussed and worked on the new routes
 - **Saturday, May 3 (7:00 PM – 9:00 PM)** – Discord (Merge - Submit)
+- **Wednseday, May 7 (7:00 PM – 9:00 PM)** – Discord (Review)
+- **Saturday, May 9 (7:00 PM – 9:00 PM)** – Discord (Merge - Submit)
 
 _The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
 
@@ -44,6 +46,7 @@ _The team used Discord voice chat for real-time communication and discussion dur
 - Provided guidance and support to team members on API development
 
 
-![image](https://github.com/user-attachments/assets/4625cbd0-aff2-404b-981a-706b77402cc4)
+<img width="822" alt="Screenshot 2025-05-10 at 11 53 26 PM" src="https://github.com/user-attachments/assets/efac2f6c-aeb2-4b0d-97c3-31266352ad59" />
+
 
 
