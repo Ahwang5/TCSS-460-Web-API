@@ -6,16 +6,39 @@
 
 ## Team Contributions
 - **Bhavneet Bhargava** – Primary developer and maintainer of the Web API. Implemented and maintained:
-  - Complete authentication system (login, password change)
-  - All book-related routes (CRUD operations)
+  - Complete authentication system:
+    - Login with JWT token generation
+    - Password change with validation
+    - Forgot password functionality with reset tokens
+    - Password reset with secure token verification
+    - Custom password rules and validation
+  - All book-related routes (CRUD operations):
+    - Get all books with pagination
+    - Get book by ISBN
+    - Get books by author
+    - Get books by title
+    - Get books by rating
+    - Get books by publication year
+    - Create new book records
+    - Update book ratings
+    - Delete book by ISBN
+    - Delete books by range
   - Comprehensive error handling and validation
   - Standardized API response formats
   - Database schema and initialization
-  - Postman test suite (58 passing tests)
+  - Postman test suite (68 passing tests)
   - TypeScript interfaces and type safety
-  - API documentation
+  - API documentation using apidoc.js
   - Database connection and query optimization
   - Facilitated team meetings and code reviews
+  - Implemented all Web API requirements:
+    - Authentication and credentialing routes
+    - Multiple book retrieval methods
+    - Book creation functionality
+    - Rating update system
+    - Multiple deletion methods
+    - Complete API documentation
+    - Comprehensive unit testing
 - **Ayub** – Worked on some testing and routes
 - **Andrew** – Set up heroku, and led team
 - **Bernard** – Worked on some database
