@@ -3,8 +3,14 @@ import express, { Request, Response, Router, NextFunction } from 'express';
 
 import jwt from 'jsonwebtoken';
 
+// Check for JWT secret
+if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set!');
+    process.exit(1);
+}
+
 const key = {
-    secret: process.env.JSON_WEB_TOKEN,
+    secret: process.env.JWT_SECRET,
 };
 
 import {
@@ -59,6 +65,11 @@ const emailMiddlewareCheck = (
         });
     }
 };
+
+// Add error handling
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 /**
  * @api {post} /register Request to register a user
@@ -163,6 +174,7 @@ registerRouter.post(
             .catch((error) => {
                 //log the error
                 // console.log(error)
+                console.error('DB Query error on register:', error);
                 if (error.constraint == 'account_username_key') {
                     response.status(400).send({
                         message: 'Username exists',
@@ -177,64 +189,69 @@ registerRouter.post(
                     });
                 } else {
                     //log the error
-                    console.error('DB Query error on register');
-                    console.error(error);
                     response.status(500).send({
                         message: 'server error - contact support',
                     });
                 }
             });
     },
-    (request: IUserRequest, response: Response) => {
-        //We're storing salted hashes to make our application more secure
-        //If you're interested as to what that is, and why we should use it
-        //watch this youtube video: https://www.youtube.com/watch?v=8ZtInClXe1Q
-        const salt = generateSalt(32);
-        const saltedHash = generateHash(request.body.password, salt);
+    async (request: IUserRequest, response: Response) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            const salt = generateSalt(32);
+            const saltedHash = generateHash(request.body.password, salt);
 
-        const theQuery =
-            'INSERT INTO Account_Credential(account_id, salted_hash, salt) VALUES ($1, $2, $3)';
-        const values = [request.id, saltedHash, salt];
-        pool.query(theQuery, values)
-            .then(() => {
-                const accessToken = jwt.sign(
-                    {
-                        role: request.body.role,
-                        id: request.id,
-                    },
-                    key.secret,
-                    {
-                        expiresIn: '14 days', // expires in 14 days
-                    }
-                );
-                console.dir({ ...request.body, password: '******' });
-                //We successfully added the user!
-                response.status(201).send({
-                    accessToken,
-
-                    user: {
-                        id: request.id,
-                        name: request.body.firstname,
-                        email: request.body.email,
-                        role: 'Admin',
-                    },
-                });
-            })
-            .catch((error) => {
-                /***********************************************************************
-                 * If we get an error inserting the PWD, we should go back and remove
-                 * the user from the member table. We don't want a member in that table
-                 * without a PWD! That implementation is up to you if you want to add
-                 * that step.
-                 **********************************************************************/
-
-                //log the error
-                console.error('DB Query error on register');
-                console.error(error);
-                response.status(500).send({
-                    message: 'server error - contact support',
-                });
+            const theQuery =
+                'INSERT INTO Account_Credential(account_id, salted_hash, salt) VALUES ($1, $2, $3)';
+            const values = [request.id, saltedHash, salt];
+            
+            console.log('Attempting to insert credentials with values:', {
+                account_id: request.id,
+                salt_length: salt.length,
+                hash_length: saltedHash.length
             });
+            
+            await client.query(theQuery, values);
+            
+            const accessToken = jwt.sign(
+                {
+                    role: request.body.role,
+                    id: request.id,
+                },
+                key.secret,
+                {
+                    expiresIn: '14 days',
+                }
+            );
+
+            await client.query('COMMIT');
+
+            response.status(201).send({
+                accessToken,
+                user: {
+                    id: request.id,
+                    name: request.body.firstname,
+                    email: request.body.email,
+                    role: request.body.role,
+                },
+            });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Detailed error in register route:', {
+                error: error,
+                message: error.message,
+                stack: error.stack,
+                code: error.code,
+                detail: error.detail
+            });
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        } finally {
+            client.release();
+        }
     }
 );
 
