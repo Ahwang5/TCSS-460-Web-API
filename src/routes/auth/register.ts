@@ -4,13 +4,13 @@ import express, { Request, Response, Router, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 // Check for JWT secret
-if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET environment variable is not set!');
+if (!process.env.JSON_WEB_TOKEN) {
+    console.error('JSON_WEB_TOKEN environment variable is not set!');
     process.exit(1);
 }
 
 const key = {
-    secret: process.env.JWT_SECRET,
+    secret: process.env.JSON_WEB_TOKEN,
 };
 
 import {
@@ -190,7 +190,7 @@ registerRouter.post(
                 } else {
                     //log the error
                     response.status(500).send({
-                        message: 'server error - contact support',
+                        message: 'server error - contact support, bill',
                     });
                 }
             });
@@ -247,7 +247,7 @@ registerRouter.post(
                 detail: error.detail
             });
             response.status(500).send({
-                message: 'server error - contact support',
+                message: 'server error - contact support, bhav',
             });
         } finally {
             client.release();
