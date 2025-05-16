@@ -42,7 +42,7 @@
         "apidoc": "^1.2.0",
         "csv-parse": "^5.5.3",
         "csv-stringify": "^6.4.5",
-        "dotenv": "^16.3.1",
+        "dotenv": "^16.5.0",
         "eslint": "^8.48.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-config-standard-with-typescript": "^39.0.0",
