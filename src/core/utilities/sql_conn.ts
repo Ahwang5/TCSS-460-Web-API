@@ -4,7 +4,7 @@ import { Pool, PoolConfig } from 'pg';
 const pgConfig: PoolConfig = process.env.DATABASE_URL
     ? {
           connectionString: process.env.DATABASE_URL,
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+          ssl: { rejectUnauthorized: false }
       }
     : {
           host: process.env.PGHOST || 'localhost',
