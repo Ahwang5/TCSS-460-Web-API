@@ -1,8 +1,19 @@
+interface BookRecord {
+    book_id: number;
+    isbn: string;
+    title: string;
+    original_title?: string;
+    author: string;
+    publication_year: number;
+    icon_url_large?: string;
+    icon_url_small?: string;
+}
+
 import { Router, Request, Response, NextFunction } from 'express';
 import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
 import { IBook, IRatings } from '../../types';
 
-const booksRouter: Router = Router();
+const BooksRouter: Router = Router();
 
 /**
  * Gets rating counts for a book
@@ -17,7 +28,7 @@ async function getRatingCounts(bookId: number): Promise<IRatings> {
       COUNT(CASE WHEN rating = 3 THEN 1 END) as rating_3,
       COUNT(CASE WHEN rating = 4 THEN 1 END) as rating_4,
       COUNT(CASE WHEN rating = 5 THEN 1 END) as rating_5
-    FROM Book_Rating
+    FROM book_rating
     WHERE book_id = $1
   `;
   const result = await pool.query(sqlQuery, [bookId]);
@@ -35,7 +46,7 @@ async function getRatingCounts(bookId: number): Promise<IRatings> {
 /**
  * Formats a database record into the required interface
  */
-async function formatRecord(record: any): Promise<IBook> {
+async function formatRecord(record: BookRecord): Promise<IBook> {
   const ratings = await getRatingCounts(record.book_id);
   return {
     isbn13: parseInt(record.isbn),
@@ -80,7 +91,7 @@ function validateAuthorName(req: Request, res: Response, next: NextFunction) {
 /**
  * Validates required fields for creating a book
  */
-function validateBookData(req: Request, res: Response, next: NextFunction) {
+function validatebookData(req: Request, res: Response, next: NextFunction) {
   const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
   if (
     !isStringProvided(isbn) ||
@@ -97,10 +108,10 @@ function validateBookData(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
- * Validates that the Book's Rating is between 0 and 5
+ * Validates that the book's Rating is between 0 and 5
  * 
  */
-function validateBookRating(req: Request, res: Response, next: NextFunction) {
+function validatebookRating(req: Request, res: Response, next: NextFunction) {
   const rating = req.body.rating;
   if (rating < 0 || rating > 5) {
     return res.status(400).json({ message: 'Invalid book rating – please check the docs.' });
@@ -111,7 +122,7 @@ function validateBookRating(req: Request, res: Response, next: NextFunction) {
 /**
  * @api {get} /books/author/:author   Get books by author
  * @apiName GetByAuthor
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {String} author   URL-encoded author name
  *
@@ -128,7 +139,7 @@ function validateBookRating(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "Author not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.get(
+BooksRouter.get(
   '/author/:author',
   validateAuthorName,
   async (req: Request, res: Response) => {
@@ -144,7 +155,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM Book
+        FROM book
         WHERE author ILIKE $1
         ORDER BY title
       `;
@@ -166,7 +177,7 @@ booksRouter.get(
 /**
  * @api {get} /books/isbn/:isbn       Get a book by ISBN
  * @apiName GetByIsbn
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {String} isbn    10–13 digit ISBN
  *
@@ -180,10 +191,10 @@ booksRouter.get(
  * @apiSuccess {String} book.small_image_url
  *
  * @apiError   (400) {String} message  "Invalid ISBN format."
- * @apiError   (404) {String} message  "Book not found"
+ * @apiError   (404) {String} message  "book not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.get(
+BooksRouter.get(
   '/isbn/:isbn',
   validateIsbnFormat,
   async (req: Request, res: Response) => {
@@ -199,7 +210,7 @@ booksRouter.get(
         publication_year,
         icon_url_large,
         icon_url_small
-      FROM Book
+      FROM book
       WHERE isbn = $1
     `;
     const sqlParams = [isbnString];
@@ -210,7 +221,7 @@ booksRouter.get(
         const book = await formatRecord(queryResult.rows[0]);
         return res.json({ book });
       }
-      res.status(404).json({ message: 'Book not found' });
+      res.status(404).json({ message: 'book not found' });
     } catch (err) {
       console.error('Error fetching book by ISBN', err);
       res.status(500).json({ message: 'Server error – contact support' });
@@ -220,8 +231,8 @@ booksRouter.get(
 
 /**
  * @api {post} /books       Create a book
- * @apiName CreateBook
- * @apiGroup Books
+ * @apiName Createbook
+ * @apiGroup books
  *
  * @apiBody  {String}  isbn            10–13 digit ISBN
  * @apiBody  {String}  authors           Comma-separated author names
@@ -236,16 +247,16 @@ booksRouter.get(
  * @apiError   (400) {String} message     Validation error – please check the docs.
  * @apiError   (500) {String} message     Server error – contact support
  */
-booksRouter.post(
+BooksRouter.post(
   '/',
-  validateBookData,
+  validatebookData,
   async (req: Request, res: Response) => {
     const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
     // Generate a new ID since `id` has no default sequence
-    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM Book');
+    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM book');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
-      INSERT INTO Book (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
+      INSERT INTO book (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *;
     `;
@@ -273,8 +284,8 @@ booksRouter.post(
 
 /**
  * @api {patch} /books/rating       Update a book rating
- * @apiName UpdateBookRating
- * @apiGroup Books
+ * @apiName UpdatebookRating
+ * @apiGroup books
  * 
  * @apiBody  {Number}  book_id     ID of the book to update rating for
  * @apiBody  {Number}  rating      New rating value (0-5)
@@ -282,28 +293,28 @@ booksRouter.post(
  * @apiSuccess (200) {Object} rating        The updated rating record
  * 
  * @apiError   (400) {String} message       Invalid rating value
- * @apiError   (404) {String} message       Book not found
+ * @apiError   (404) {String} message       book not found
  * @apiError   (500) {String} message       Server error – contact support
  */
-booksRouter.patch(
+BooksRouter.patch(
   '/rating',
-  validateBookRating,
+  validatebookRating,
   async (req: Request, res: Response) => {
     console.log('Rating update endpoint hit with data:', req.body);
     try {
       const { book_id, rating } = req.body;
 
       // First check if the book exists
-      const bookCheckQuery = 'SELECT book_id FROM Book WHERE book_id = $1';
+      const bookCheckQuery = 'SELECT book_id FROM book WHERE book_id = $1';
       const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
       
       if (bookCheckResult.rowCount === 0) {
-        return res.status(404).json({ message: 'Book not found' });
+        return res.status(404).json({ message: 'book not found' });
       }
 
       // Update or insert the rating
       const sqlQuery = `
-        INSERT INTO Book_Rating (book_id, account_id, rating, review_text)
+        INSERT INTO book_rating (book_id, account_id, rating, review_text)
         VALUES ($1, 1, $2, 'Updated via API')
         ON CONFLICT (book_id, account_id) 
         DO UPDATE SET rating = $2
@@ -325,8 +336,8 @@ booksRouter.patch(
 
 /**
  * @api {get} /books       Get all books with pagination
- * @apiName GetAllBooks
- * @apiGroup Books
+ * @apiName GetAllbooks
+ * @apiGroup books
  * 
  * @apiQuery {Number} [page=1]     Page number
  * @apiQuery {Number} [limit=10]   Number of books per page
@@ -337,7 +348,7 @@ booksRouter.patch(
  * @apiSuccess {Number}   limit    Number of books per page
  * @apiSuccess {Number}   pages    Total number of pages
  */
-booksRouter.get(
+BooksRouter.get(
   '/',
   async (req: Request, res: Response) => {
     try {
@@ -345,7 +356,7 @@ booksRouter.get(
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
 
-      const countQuery = 'SELECT COUNT(*) FROM Book';
+      const countQuery = 'SELECT COUNT(*) FROM book';
       const booksQuery = `
         SELECT 
           book_id,
@@ -356,7 +367,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM Book
+        FROM book
         ORDER BY title
         LIMIT $1 OFFSET $2
       `;
@@ -387,17 +398,17 @@ booksRouter.get(
 /**
  * @api {delete} /books/isbn/:isbn       Delete a book by ISBN
  * @apiName DeleteByIsbn
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {String} isbn    10–13 digit ISBN
  *
- * @apiSuccess {String} message  "Book deleted successfully"
+ * @apiSuccess {String} message  "book deleted successfully"
  *
  * @apiError   (400) {String} message  "Invalid ISBN format."
- * @apiError   (404) {String} message  "Book not found"
+ * @apiError   (404) {String} message  "book not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.delete(
+BooksRouter.delete(
   '/isbn/:isbn',
   validateIsbnFormat,
   async (req: Request, res: Response) => {
@@ -405,24 +416,24 @@ booksRouter.delete(
 
     try {
       // First check if the book exists
-      const checkQuery = 'SELECT book_id FROM Book WHERE isbn = $1';
+      const checkQuery = 'SELECT book_id FROM book WHERE isbn = $1';
       const checkResult = await pool.query(checkQuery, [isbnString]);
       
       if (checkResult.rowCount === 0) {
-        return res.status(404).json({ message: 'Book not found' });
+        return res.status(404).json({ message: 'book not found' });
       }
 
       const bookId = checkResult.rows[0].book_id;
 
       // Delete ratings first (due to foreign key constraint)
-      const deleteRatingsQuery = 'DELETE FROM Book_Rating WHERE book_id = $1';
+      const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = $1';
       await pool.query(deleteRatingsQuery, [bookId]);
 
       // Delete the book
-      const deleteQuery = 'DELETE FROM Book WHERE isbn = $1';
+      const deleteQuery = 'DELETE FROM book WHERE isbn = $1';
       await pool.query(deleteQuery, [isbnString]);
 
-      return res.status(200).json({ message: 'Book deleted successfully' });
+      return res.status(200).json({ message: 'book deleted successfully' });
     } catch (err) {
       console.error('Error deleting book by ISBN', err);
       res.status(500).json({ message: 'Server error – contact support' });
@@ -433,12 +444,12 @@ booksRouter.delete(
 /**
  * @api {delete} /books/range       Delete books by ISBN range
  * @apiName DeleteByRange
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiBody  {String}  start_isbn  Starting ISBN in range
  * @apiBody  {String}  end_isbn    Ending ISBN in range
  *
- * @apiSuccess {String} message        "Books deleted successfully"
+ * @apiSuccess {String} message        "books deleted successfully"
  * @apiSuccess {Number} deleted_count  Number of books deleted
  * @apiSuccess {String[]} deleted_isbns  List of deleted book ISBNs
  *
@@ -446,7 +457,7 @@ booksRouter.delete(
  * @apiError   (404) {String} message  "No books found in range"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.delete(
+BooksRouter.delete(
   '/range',
   async (req: Request, res: Response) => {
     const { start_isbn, end_isbn } = req.body;
@@ -457,8 +468,8 @@ booksRouter.delete(
 
     try {
       // First get all book IDs in the range
-      const getBooksQuery = 'SELECT book_id FROM Book WHERE isbn BETWEEN $1 AND $2';
-      const booksResult = await pool.query(getBooksQuery, [start_isbn.toString(), end_isbn.toString()]);
+      const getbooksQuery = 'SELECT book_id FROM book WHERE isbn BETWEEN $1 AND $2';
+      const booksResult = await pool.query(getbooksQuery, [start_isbn.toString(), end_isbn.toString()]);
 
       if (booksResult.rowCount === 0) {
         return res.status(404).json({ message: 'No books found in range' });
@@ -467,15 +478,15 @@ booksRouter.delete(
       const bookIds = booksResult.rows.map(row => row.book_id);
 
       // Delete ratings first (due to foreign key constraint)
-      const deleteRatingsQuery = 'DELETE FROM Book_Rating WHERE book_id = ANY($1)';
+      const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = ANY($1)';
       await pool.query(deleteRatingsQuery, [bookIds]);
 
       // Delete books in range and return their ISBNs
-      const deleteQuery = 'DELETE FROM Book WHERE book_id = ANY($1) RETURNING isbn';
+      const deleteQuery = 'DELETE FROM book WHERE book_id = ANY($1) RETURNING isbn';
       const result = await pool.query(deleteQuery, [bookIds]);
 
       return res.status(200).json({
-        message: 'Books deleted successfully',
+        message: 'books deleted successfully',
         deleted_count: result.rowCount,
         deleted_isbns: result.rows.map(row => row.isbn)
       });
@@ -504,7 +515,7 @@ function validateTitle(req: Request, res: Response, next: NextFunction) {
 /**
  * @api {get} /books/title/:title   Get books by title
  * @apiName GetByTitle
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {String} title   URL-encoded book title
  *
@@ -520,7 +531,7 @@ function validateTitle(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found with that title"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.get(
+BooksRouter.get(
   '/title/:title',
   validateTitle,
   async (req: Request, res: Response) => {
@@ -536,7 +547,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM Book
+        FROM book
         WHERE title ILIKE $1
         ORDER BY title
       `;
@@ -572,7 +583,7 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
 /**
  * @api {get} /books/rating/:rating   Get books by rating
  * @apiName GetByRating
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {Number} rating   Rating value (1-5)
  *
@@ -590,7 +601,7 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found with that rating"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.get(
+BooksRouter.get(
   '/rating/:rating',
   validateRatingParam,
   async (req: Request, res: Response) => {
@@ -610,8 +621,8 @@ booksRouter.get(
             b.icon_url_large,
             b.icon_url_small,
             COALESCE(AVG(br.rating), 0) as avg_rating
-        FROM Book b
-        LEFT JOIN Book_Rating br ON b.book_id = br.book_id
+        FROM book b
+        LEFT JOIN book_rating br ON b.book_id = br.book_id
         GROUP BY b.book_id, b.isbn, b.title, b.original_title, b.author, b.publication_year, b.icon_url_large, b.icon_url_small
         HAVING COALESCE(AVG(br.rating), 0) = $1
         ORDER BY b.title
@@ -648,7 +659,7 @@ function validateYear(req: Request, res: Response, next: NextFunction) {
 /**
  * @api {get} /books/year/:year   Get books by publication year
  * @apiName GetByYear
- * @apiGroup Books
+ * @apiGroup books
  *
  * @apiParam  {Number} year   Publication year
  *
@@ -666,7 +677,7 @@ function validateYear(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found from that year"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-booksRouter.get(
+BooksRouter.get(
   '/year/:year',
   validateYear,
   async (req: Request, res: Response) => {
@@ -685,7 +696,7 @@ booksRouter.get(
             publication_year,
             icon_url_large,
             icon_url_small
-        FROM Book
+        FROM book
         WHERE publication_year = $1
         ORDER BY title
     `;
@@ -704,4 +715,4 @@ booksRouter.get(
   }
 );
 
-export { booksRouter }; 
+export { BooksRouter }; 
