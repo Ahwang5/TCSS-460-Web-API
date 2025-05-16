@@ -1,4 +1,14 @@
-import express, { Express, Request, Response } from 'express';
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const dotenv = require('dotenv');
+        dotenv.config();
+    } catch (e) {
+        console.log('dotenv not available, skipping');
+    }
+}
+
+import express, { Express, Request, Response, NextFunction } from 'express';
 
 import cors from 'cors';
 
@@ -30,7 +40,7 @@ app.get('/', (request: Request, response: Response) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: Function) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('Error:', err);
     res.status(500).json({ error: 'Internal Server Error' });
 });
