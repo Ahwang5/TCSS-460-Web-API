@@ -3,13 +3,14 @@ import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
 import { IBook, IRatings } from '../../types';
 
 interface BookRecord {
-    id: number;               // Was book_id
-    isbn13: string;           // Was isbn
-    authors: string;          // Was author
+    id: number;
+    isbn13: string;
+    authors: string;
     publication_year: number;
     original_title?: string;
-    title: string;           // Check if this exists
-    image_url?: string;      // Was icon_url_large/small
+    title?: string;
+    image_url?: string;
+    image_small_url?: string;
     rating_avg?: number;
     rating_count?: number;
     rating_1_star?: number;
@@ -52,11 +53,11 @@ async function getRatingCounts(bookId: number): Promise<IRatings> {
  */
 async function formatRecord(record: BookRecord): Promise<IBook> {
     return {
-        isbn13: parseInt(record.isbn13.toString()), // Convert to number if it's not already
+        isbn13: parseInt(record.isbn13.toString()),
         authors: record.authors,
         publication: record.publication_year,
-        original_title: record.original_title || '', // Use empty string as fallback
-        title: record.original_title || '', // Since you don't have a title column, use original_title
+        original_title: record.original_title || '',
+        title: record.title || '', // Since you don't have a title column, use original_title
         ratings: {
             average: record.rating_avg || 0,
             count: record.rating_count || 0,
@@ -68,7 +69,7 @@ async function formatRecord(record: BookRecord): Promise<IBook> {
         },
         icons: {
             large: record.image_url || '',
-            small: record.image_url || '' // Use the same URL for both since you only have one
+            small: record.image_small_url || '' // Use the same URL for both since you only have one
         }
     };
 }
@@ -275,19 +276,21 @@ booksRouter.post(
     // Generate a new ID since `id` has no default sequence
     const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
-    const sqlQuery = `
-      INSERT INTO books (id, isbn13, authors, publication_year, original_title, image_url)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;
-    `;
-    const sqlParams = [
-        newId,
-        isbn.toString(),
-        authors,
-        publication_year,
-        original_title,
-        image_url
-    ];
+      const sqlQuery = `
+          INSERT INTO books (id, isbn13, authors, publication_year, original_title, title, image_url, image_small_url)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              RETURNING *;
+      `;
+      const sqlParams = [
+          newId,
+          isbn.toString(),
+          authors,
+          publication_year,
+          original_title,
+          title,
+          image_url,
+          small_image_url  // This maps your small_image_url param to the image_small_url column
+      ];
 
     try {
       const queryResult = await pool.query(sqlQuery, sqlParams);
