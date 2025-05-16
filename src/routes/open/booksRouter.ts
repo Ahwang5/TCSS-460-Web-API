@@ -13,7 +13,7 @@ interface BookRecord {
     icon_url_small?: string;
 }
 
-const BooksRouter: Router = Router();
+const booksRouter: Router = Router();
 
 /**
  * Gets rating counts for a book
@@ -139,7 +139,7 @@ function validatebookRating(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "Author not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.get(
+booksRouter.get(
   '/author/:author',
   validateAuthorName,
   async (req: Request, res: Response) => {
@@ -194,7 +194,7 @@ BooksRouter.get(
  * @apiError   (404) {String} message  "book not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.get(
+booksRouter.get(
   '/isbn/:isbn',
   validateIsbnFormat,
   async (req: Request, res: Response) => {
@@ -247,7 +247,7 @@ BooksRouter.get(
  * @apiError   (400) {String} message     Validation error – please check the docs.
  * @apiError   (500) {String} message     Server error – contact support
  */
-BooksRouter.post(
+booksRouter.post(
   '/',
   validatebookData,
   async (req: Request, res: Response) => {
@@ -296,7 +296,7 @@ BooksRouter.post(
  * @apiError   (404) {String} message       book not found
  * @apiError   (500) {String} message       Server error – contact support
  */
-BooksRouter.patch(
+booksRouter.patch(
   '/rating',
   validatebookRating,
   async (req: Request, res: Response) => {
@@ -348,7 +348,7 @@ BooksRouter.patch(
  * @apiSuccess {Number}   limit    Number of books per page
  * @apiSuccess {Number}   pages    Total number of pages
  */
-BooksRouter.get(
+booksRouter.get(
   '/',
   async (req: Request, res: Response) => {
     try {
@@ -408,7 +408,7 @@ BooksRouter.get(
  * @apiError   (404) {String} message  "book not found"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.delete(
+booksRouter.delete(
   '/isbn/:isbn',
   validateIsbnFormat,
   async (req: Request, res: Response) => {
@@ -457,7 +457,7 @@ BooksRouter.delete(
  * @apiError   (404) {String} message  "No books found in range"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.delete(
+booksRouter.delete(
   '/range',
   async (req: Request, res: Response) => {
     const { start_isbn, end_isbn } = req.body;
@@ -531,7 +531,7 @@ function validateTitle(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found with that title"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.get(
+booksRouter.get(
   '/title/:title',
   validateTitle,
   async (req: Request, res: Response) => {
@@ -601,7 +601,7 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found with that rating"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.get(
+booksRouter.get(
   '/rating/:rating',
   validateRatingParam,
   async (req: Request, res: Response) => {
@@ -677,7 +677,7 @@ function validateYear(req: Request, res: Response, next: NextFunction) {
  * @apiError   (404) {String} message  "No books found from that year"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
-BooksRouter.get(
+booksRouter.get(
   '/year/:year',
   validateYear,
   async (req: Request, res: Response) => {
@@ -715,4 +715,4 @@ BooksRouter.get(
   }
 );
 
-export { BooksRouter }; 
+export { booksRouter }; 
