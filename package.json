@@ -2,10 +2,10 @@
     "name": "tcss460_node_express_template",
     "version": "1.0.0",
     "description": "Template for a node/express web service for TCSS 460",
-    "main": "dist/app.js",
+    "main": "build/index.js",
     "scripts": {
-        "start": "node build/index.js",
-        "postinstall": "tsc",
+        "start": "node build/src/index.js",
+        "postinstall": "npm run build",
         "build": "tsc -p .",
         "dev": "nodemon -r dotenv/config src/index.ts",
         "local": "nodemon -r dotenv/config src/index.ts",
@@ -16,7 +16,7 @@
         "test:e2e": "start-server-and-test \"npm run local\" http://localhost:4001 \"npm run test:postman\"",
         "format:check": "prettier --check .",
         "format:write": "prettier --write .",
-        "deploy": "git add . && git commit -m Heroku && git push heroku master",
+        "deploy": "npm run build && git add . && git commit -m Heroku && git push heroku main",
         "docs": "apidoc -i src/ -o docs/",
         "docs:deploy": "npm run docs && git add docs/ && git commit -m 'Update API documentation' && git push origin main",
         "clean-books": "ts-node scripts/cleanBooks.ts"
