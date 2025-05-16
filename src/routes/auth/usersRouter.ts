@@ -191,4 +191,46 @@ usersRouter.post('/reset-password', async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * @api {delete} /users/:id Delete a user
+ * @apiName DeleteUser
+ * @apiGroup Users
+ *
+ * @apiParam {Number} id User ID to delete
+ *
+ * @apiSuccess {String} message Success message
+ *
+ * @apiError (404) {String} message User not found
+ * @apiError (500) {String} message Server error
+ */
+usersRouter.delete(
+    '/:id',
+    authenticateToken, // Optional: require authentication
+    async (req: Request, res: Response) => {
+        try {
+            const userId = req.params.id;
+
+            // Check if user exists
+            const checkUserQuery = 'SELECT account_id FROM Account WHERE account_id = $1';
+            const checkResult = await pool.query(checkUserQuery, [userId]);
+
+            if (checkResult.rowCount === 0) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            // Delete associated credentials first (due to foreign key constraints)
+            await pool.query('DELETE FROM Account_Credential WHERE account_id = $1', [userId]);
+
+            // Delete the user
+            const deleteQuery = 'DELETE FROM Account WHERE account_id = $1';
+            await pool.query(deleteQuery, [userId]);
+
+            return res.status(200).json({ message: 'User deleted successfully' });
+        } catch (err) {
+            console.error('Error deleting user:', err);
+            return res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
 export { usersRouter }; 
