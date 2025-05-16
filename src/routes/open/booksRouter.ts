@@ -156,18 +156,23 @@ booksRouter.get(
     try {
       const { author } = req.params;
       const query = `
-        SELECT 
-          book_id,
-          isbn,
-          title,
+        SELECT
+          id,
+          isbn13,
           original_title,
-          author,
+          authors,
           publication_year,
-          icon_url_large,
-          icon_url_small
+          image_url,
+          rating_avg,
+          rating_count,
+          rating_1_star,
+          rating_2_star,
+          rating_3_star,
+          rating_4_star,
+          rating_5_star
         FROM books
-        WHERE author ILIKE $1
-        ORDER BY title
+        WHERE authors ILIKE $1
+        ORDER BY original_title
       `;
       const result = await pool.query(query, [`%${author}%`]);
 
@@ -268,7 +273,7 @@ booksRouter.post(
   async (req: Request, res: Response) => {
     const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
     // Generate a new ID since `id` has no default sequence
-    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM books');
+    const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
       INSERT INTO books (id, isbn13, authors, publication_year, original_title, image_url)
@@ -276,15 +281,12 @@ booksRouter.post(
       RETURNING *;
     `;
     const sqlParams = [
-      newId,
-      isbn.toString(),
-      authors,
-      publication_year,
-      title,
-      original_title,
-      'Unknown',
-      9.99,
-      100
+        newId,
+        isbn.toString(),
+        authors,
+        publication_year,
+        original_title,
+        image_url
     ];
 
     try {
@@ -320,7 +322,7 @@ booksRouter.patch(
       const { book_id, rating } = req.body;
 
       // First check if the book exists
-      const bookCheckQuery = 'SELECT book_id FROM books WHERE book_id = $1';
+      const bookCheckQuery = 'SELECT id FROM books WHERE id = $1';
       const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
       
       if (bookCheckResult.rowCount === 0) {
@@ -373,19 +375,24 @@ booksRouter.get(
 
       const countQuery = 'SELECT COUNT(*) FROM books';
       const booksQuery = `
-        SELECT 
-          book_id,
-          isbn,
-          title,
-          original_title,
-          author,
-          publication_year,
-          icon_url_large,
-          icon_url_small
+        SELECT
+            id,
+            isbn13,
+            original_title,
+            authors,
+            publication_year,
+            image_url,
+            rating_avg,
+            rating_count,
+            rating_1_star,
+            rating_2_star,
+            rating_3_star,
+            rating_4_star,
+            rating_5_star
         FROM books
-        ORDER BY title
+        ORDER BY original_title
         LIMIT $1 OFFSET $2
-      `;
+        `;
 
       const [countResult, booksResult] = await Promise.all([
         pool.query(countQuery),
@@ -431,7 +438,7 @@ booksRouter.delete(
 
     try {
       // First check if the book exists
-      const checkQuery = 'SELECT id FROM books WHERE isbn = $1';
+      const checkQuery = 'SELECT id FROM books WHERE isbn13 = $1';
       const checkResult = await pool.query(checkQuery, [isbnString]);
       
       if (checkResult.rowCount === 0) {
@@ -445,7 +452,7 @@ booksRouter.delete(
       await pool.query(deleteRatingsQuery, [bookId]);
 
       // Delete the book
-      const deleteQuery = 'DELETE FROM books WHERE isbn = $1';
+      const deleteQuery = 'DELETE FROM books WHERE isbn13 = $1';
       await pool.query(deleteQuery, [isbnString]);
 
       return res.status(200).json({ message: 'book deleted successfully' });
@@ -483,7 +490,7 @@ booksRouter.delete(
 
     try {
       // First get all book IDs in the range
-      const getbooksQuery = 'SELECT book_id FROM books WHERE isbn BETWEEN $1 AND $2';
+      const getbooksQuery = 'SELECT id FROM books WHERE isbn13 BETWEEN $1 AND $2';
       const booksResult = await pool.query(getbooksQuery, [start_isbn.toString(), end_isbn.toString()]);
 
       if (booksResult.rowCount === 0) {
@@ -497,7 +504,7 @@ booksRouter.delete(
       await pool.query(deleteRatingsQuery, [bookIds]);
 
       // Delete books in range and return their ISBNs
-      const deleteQuery = 'DELETE FROM books WHERE book_id = ANY($1) RETURNING isbn';
+      const deleteQuery = 'DELETE FROM books WHERE id = ANY($1) RETURNING isbn13';
       const result = await pool.query(deleteQuery, [bookIds]);
 
       return res.status(200).json({
@@ -553,19 +560,24 @@ booksRouter.get(
     try {
       const { title } = req.params;
       const query = `
-        SELECT 
-          book_id,
-          isbn,
-          title,
-          original_title,
-          author,
-          publication_year,
-          icon_url_large,
-          icon_url_small
-        FROM books
-        WHERE title ILIKE $1
-        ORDER BY title
-      `;
+          SELECT 
+            id,
+            isbn13,
+            original_title,
+            authors,
+            publication_year,
+            image_url,
+            rating_avg,
+            rating_count,
+            rating_1_star,
+            rating_2_star,
+            rating_3_star,
+            rating_4_star,
+            rating_5_star
+          FROM books
+          WHERE original_title ILIKE $1
+          ORDER BY original_title
+        `;
       const result = await pool.query(query, [`%${title}%`]);
 
       if (result.rows.length === 0) {
@@ -626,21 +638,27 @@ booksRouter.get(
     }
 
     const query = `
-        SELECT 
-            b.book_id,
-            b.isbn,
-            b.title,
-            b.original_title,
-            b.author,
-            b.publication_year,
-            b.icon_url_large,
-            b.icon_url_small,
-            COALESCE(AVG(br.rating), 0) as avg_rating
-        FROM books b
-        LEFT JOIN book_rating br ON b.book_id = br.book_id
-        GROUP BY b.book_id, b.isbn, b.title, b.original_title, b.author, b.publication_year, b.icon_url_large, b.icon_url_small
-        HAVING COALESCE(AVG(br.rating), 0) = $1
-        ORDER BY b.title
+      SELECT 
+        b.id,
+        b.isbn13,
+        b.original_title,
+        b.authors,
+        b.publication_year,
+        b.image_url,
+        b.rating_avg,
+        b.rating_count,
+        b.rating_1_star,
+        b.rating_2_star,
+        b.rating_3_star,
+        b.rating_4_star,
+        b.rating_5_star
+      FROM books b
+      LEFT JOIN book_rating br ON b.id = br.book_id
+      GROUP BY b.id, b.isbn13, b.original_title, b.authors, b.publication_year, b.image_url, 
+               b.rating_avg, b.rating_count, b.rating_1_star, b.rating_2_star, b.rating_3_star, 
+               b.rating_4_star, b.rating_5_star
+      HAVING COALESCE(AVG(br.rating), 0) = $1
+      ORDER BY b.original_title
     `;
 
     try {
@@ -702,20 +720,24 @@ booksRouter.get(
     }
 
     const query = `
-        SELECT 
-            book_id,
-            isbn,
-            title,
-            original_title,
-            author,
-            publication_year,
-            icon_url_large,
-            icon_url_small
-        FROM books
-        WHERE publication_year = $1
-        ORDER BY title
+      SELECT 
+        id,
+        isbn13,
+        original_title,
+        authors,
+        publication_year,
+        image_url,
+        rating_avg,
+        rating_count,
+        rating_1_star,
+        rating_2_star,
+        rating_3_star,
+        rating_4_star,
+        rating_5_star
+      FROM books
+      WHERE publication_year = $1
+      ORDER BY original_title
     `;
-
     try {
         const result = await pool.query(query, [year]);
         if (result.rows.length === 0) {
