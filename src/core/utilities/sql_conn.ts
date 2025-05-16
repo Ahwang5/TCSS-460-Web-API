@@ -1,15 +1,11 @@
 // Obtain a Pool of DB connections.
 import { Pool, PoolConfig } from 'pg';
 
-// Force SSL for Heroku PostgreSQL
-process.env.PGSSLMODE = 'require';
-
 const pgConfig: PoolConfig = process.env.DATABASE_URL
     ? {
         connectionString: process.env.DATABASE_URL,
         ssl: {
-            rejectUnauthorized: false
-            // Remove the invalid properties that TypeScript is complaining about
+            rejectUnauthorized: false  // This disables certificate validation
         }
     }
     : {
@@ -21,8 +17,8 @@ const pgConfig: PoolConfig = process.env.DATABASE_URL
         ssl: false
     };
 
-console.log('Connecting to database with SSL configuration',
-    process.env.DATABASE_URL ? 'SSL Enabled for remote connection' : 'Local connection');
+console.log('PostgreSQL connection config:',
+    process.env.DATABASE_URL ? 'Using DATABASE_URL with SSL (rejectUnauthorized: false)' : 'Using local config');
 
 const pool = new Pool(pgConfig);
 
