@@ -155,7 +155,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM book
+        FROM books
         WHERE author ILIKE $1
         ORDER BY title
       `;
@@ -210,7 +210,7 @@ booksRouter.get(
         publication_year,
         icon_url_large,
         icon_url_small
-      FROM book
+      FROM books
       WHERE isbn = $1
     `;
     const sqlParams = [isbnString];
@@ -253,10 +253,10 @@ booksRouter.post(
   async (req: Request, res: Response) => {
     const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
     // Generate a new ID since `id` has no default sequence
-    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM book');
+    const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM books');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
-      INSERT INTO book (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
+      INSERT INTO books (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *;
     `;
@@ -305,7 +305,7 @@ booksRouter.patch(
       const { book_id, rating } = req.body;
 
       // First check if the book exists
-      const bookCheckQuery = 'SELECT book_id FROM book WHERE book_id = $1';
+      const bookCheckQuery = 'SELECT book_id FROM books WHERE book_id = $1';
       const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
       
       if (bookCheckResult.rowCount === 0) {
@@ -356,7 +356,7 @@ booksRouter.get(
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
 
-      const countQuery = 'SELECT COUNT(*) FROM book';
+      const countQuery = 'SELECT COUNT(*) FROM books';
       const booksQuery = `
         SELECT 
           book_id,
@@ -367,7 +367,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM book
+        FROM books
         ORDER BY title
         LIMIT $1 OFFSET $2
       `;
@@ -416,7 +416,7 @@ booksRouter.delete(
 
     try {
       // First check if the book exists
-      const checkQuery = 'SELECT book_id FROM book WHERE isbn = $1';
+      const checkQuery = 'SELECT book_id FROM books WHERE isbn = $1';
       const checkResult = await pool.query(checkQuery, [isbnString]);
       
       if (checkResult.rowCount === 0) {
@@ -430,7 +430,7 @@ booksRouter.delete(
       await pool.query(deleteRatingsQuery, [bookId]);
 
       // Delete the book
-      const deleteQuery = 'DELETE FROM book WHERE isbn = $1';
+      const deleteQuery = 'DELETE FROM books WHERE isbn = $1';
       await pool.query(deleteQuery, [isbnString]);
 
       return res.status(200).json({ message: 'book deleted successfully' });
@@ -468,7 +468,7 @@ booksRouter.delete(
 
     try {
       // First get all book IDs in the range
-      const getbooksQuery = 'SELECT book_id FROM book WHERE isbn BETWEEN $1 AND $2';
+      const getbooksQuery = 'SELECT book_id FROM books WHERE isbn BETWEEN $1 AND $2';
       const booksResult = await pool.query(getbooksQuery, [start_isbn.toString(), end_isbn.toString()]);
 
       if (booksResult.rowCount === 0) {
@@ -482,7 +482,7 @@ booksRouter.delete(
       await pool.query(deleteRatingsQuery, [bookIds]);
 
       // Delete books in range and return their ISBNs
-      const deleteQuery = 'DELETE FROM book WHERE book_id = ANY($1) RETURNING isbn';
+      const deleteQuery = 'DELETE FROM books WHERE book_id = ANY($1) RETURNING isbn';
       const result = await pool.query(deleteQuery, [bookIds]);
 
       return res.status(200).json({
@@ -547,7 +547,7 @@ booksRouter.get(
           publication_year,
           icon_url_large,
           icon_url_small
-        FROM book
+        FROM books
         WHERE title ILIKE $1
         ORDER BY title
       `;
@@ -621,7 +621,7 @@ booksRouter.get(
             b.icon_url_large,
             b.icon_url_small,
             COALESCE(AVG(br.rating), 0) as avg_rating
-        FROM book b
+        FROM books b
         LEFT JOIN book_rating br ON b.book_id = br.book_id
         GROUP BY b.book_id, b.isbn, b.title, b.original_title, b.author, b.publication_year, b.icon_url_large, b.icon_url_small
         HAVING COALESCE(AVG(br.rating), 0) = $1
@@ -696,7 +696,7 @@ booksRouter.get(
             publication_year,
             icon_url_large,
             icon_url_small
-        FROM book
+        FROM books
         WHERE publication_year = $1
         ORDER BY title
     `;
