@@ -1,3 +1,7 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
+import { IBook, IRatings } from '../../types';
+
 interface BookRecord {
     book_id: number;
     isbn: string;
@@ -8,10 +12,6 @@ interface BookRecord {
     icon_url_large?: string;
     icon_url_small?: string;
 }
-
-import { Router, Request, Response, NextFunction } from 'express';
-import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
-import { IBook, IRatings } from '../../types';
 
 const BooksRouter: Router = Router();
 
