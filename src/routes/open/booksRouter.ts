@@ -629,50 +629,46 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
-  '/rating/:rating',
-  validateRatingParam,
-  async (req: Request, res: Response) => {
-    const rating = parseFloat(req.params.rating);
-    if (isNaN(rating) || rating < 0 || rating > 5) {
-        return res.status(400).json({ error: 'Rating must be a number between 0 and 5' });
-    }
+    '/rating/:rating',
+    validateRatingParam,
+    async (req: Request, res: Response) => {
+        const rating = parseFloat(req.params.rating);
+        // Find books with ratings within 0.2 of the specified rating
+        const lowerBound = rating - 0.2;
+        const upperBound = rating + 0.2;
 
-    const query = `
-      SELECT 
-        b.id,
-        b.isbn13,
-        b.original_title,
-        b.authors,
-        b.publication_year,
-        b.image_url,
-        b.rating_avg,
-        b.rating_count,
-        b.rating_1_star,
-        b.rating_2_star,
-        b.rating_3_star,
-        b.rating_4_star,
-        b.rating_5_star
-      FROM books b
-      LEFT JOIN book_rating br ON b.id = br.book_id
-      GROUP BY b.id, b.isbn13, b.original_title, b.authors, b.publication_year, b.image_url, 
-               b.rating_avg, b.rating_count, b.rating_1_star, b.rating_2_star, b.rating_3_star, 
-               b.rating_4_star, b.rating_5_star
-      HAVING COALESCE(AVG(br.rating), 0) = $1
-      ORDER BY b.original_title
-    `;
+        const query = `
+            SELECT
+                id,
+                isbn13,
+                original_title,
+                authors,
+                publication_year,
+                image_url,
+                rating_avg,
+                rating_count,
+                rating_1_star,
+                rating_2_star,
+                rating_3_star,
+                rating_4_star,
+                rating_5_star
+            FROM books
+            WHERE rating_avg BETWEEN $1 AND $2
+            ORDER BY original_title
+        `;
 
-    try {
-        const result = await pool.query(query, [rating]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'No books found with that rating' });
+        try {
+            const result = await pool.query(query, [lowerBound, upperBound]);
+            if (result.rows.length === 0) {
+                return res.status(404).json({ message: 'No books found with that rating' });
+            }
+            const books = await Promise.all(result.rows.map(formatRecord));
+            res.json({ books });
+        } catch (err) {
+            console.error('Database query error:', err);
+            res.status(500).json({ error: 'Internal server error' });
         }
-        const books = await Promise.all(result.rows.map(formatRecord));
-        res.json({ books });
-    } catch (err) {
-        console.error('Database query error:', err);
-        res.status(500).json({ error: 'Internal server error' });
     }
-  }
 );
 
 /**
