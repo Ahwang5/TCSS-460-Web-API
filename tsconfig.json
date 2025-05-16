@@ -5,7 +5,9 @@
         "target": "es6",
         "moduleResolution": "node",
         "sourceMap": true,
-        "outDir": "build"
+        "outDir": "build",
+        "rootDir": "src"
     },
-    "lib": ["es2015"]
+    "lib": ["es2015"],
+    "include": ["src/**/*"]
 }

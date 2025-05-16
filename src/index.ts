@@ -1,3 +1,5 @@
+import './core/force-ssl';
+
 import express, { Express, Request, Response } from 'express';
 
 import cors from 'cors';
