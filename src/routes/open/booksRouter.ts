@@ -3,65 +3,75 @@ import { pool, isStringProvided, isNumberProvided } from '../../core/utilities';
 import { IBook, IRatings } from '../../types';
 
 interface BookRecord {
-    book_id: number;
-    isbn: string;
-    title: string;
-    original_title?: string;
-    author: string;
+    id: number;               // Was book_id
+    isbn13: string;           // Was isbn
+    authors: string;          // Was author
     publication_year: number;
-    icon_url_large?: string;
-    icon_url_small?: string;
+    original_title?: string;
+    title: string;           // Check if this exists
+    image_url?: string;      // Was icon_url_large/small
+    rating_avg?: number;
+    rating_count?: number;
+    rating_1_star?: number;
+    rating_2_star?: number;
+    rating_3_star?: number;
+    rating_4_star?: number;
+    rating_5_star?: number;
 }
-
 const booksRouter: Router = Router();
 
 /**
  * Gets rating counts for a book
  */
 async function getRatingCounts(bookId: number): Promise<IRatings> {
-  const sqlQuery = `
-    SELECT 
-      COALESCE(AVG(rating), 0) as average,
-      COUNT(*) as count,
-      COUNT(CASE WHEN rating = 1 THEN 1 END) as rating_1,
-      COUNT(CASE WHEN rating = 2 THEN 1 END) as rating_2,
-      COUNT(CASE WHEN rating = 3 THEN 1 END) as rating_3,
-      COUNT(CASE WHEN rating = 4 THEN 1 END) as rating_4,
-      COUNT(CASE WHEN rating = 5 THEN 1 END) as rating_5
-    FROM book_rating
-    WHERE book_id = $1
-  `;
-  const result = await pool.query(sqlQuery, [bookId]);
-  return {
-    average: parseFloat(result.rows[0].average),
-    count: parseInt(result.rows[0].count),
-    rating_1: parseInt(result.rows[0].rating_1),
-    rating_2: parseInt(result.rows[0].rating_2),
-    rating_3: parseInt(result.rows[0].rating_3),
-    rating_4: parseInt(result.rows[0].rating_4),
-    rating_5: parseInt(result.rows[0].rating_5)
-  };
+    const sqlQuery = `
+        SELECT
+            rating_avg as average,
+            rating_count as count,
+      rating_1_star as rating_1,
+      rating_2_star as rating_2,
+      rating_3_star as rating_3,
+      rating_4_star as rating_4,
+      rating_5_star as rating_5
+        FROM books
+        WHERE id = $1
+    `;
+    const result = await pool.query(sqlQuery, [bookId]);
+    return {
+        average: parseFloat(result.rows[0].average || 0),
+        count: parseInt(result.rows[0].count || 0),
+        rating_1: parseInt(result.rows[0].rating_1 || 0),
+        rating_2: parseInt(result.rows[0].rating_2 || 0),
+        rating_3: parseInt(result.rows[0].rating_3 || 0),
+        rating_4: parseInt(result.rows[0].rating_4 || 0),
+        rating_5: parseInt(result.rows[0].rating_5 || 0)
+    };
 }
-
 /**
  * Formats a database record into the required interface
  */
 async function formatRecord(record: BookRecord): Promise<IBook> {
-  const ratings = await getRatingCounts(record.book_id);
-  return {
-    isbn13: parseInt(record.isbn),
-    authors: record.author,
-    publication: record.publication_year,
-    original_title: record.original_title || record.title,
-    title: record.title,
-    ratings,
-    icons: {
-      large: record.icon_url_large || '',
-      small: record.icon_url_small || ''
-    }
-  };
+    return {
+        isbn13: parseInt(record.isbn13.toString()), // Convert to number if it's not already
+        authors: record.authors,
+        publication: record.publication_year,
+        original_title: record.original_title || '', // Use empty string as fallback
+        title: record.original_title || '', // Since you don't have a title column, use original_title
+        ratings: {
+            average: record.rating_avg || 0,
+            count: record.rating_count || 0,
+            rating_1: record.rating_1_star || 0,
+            rating_2: record.rating_2_star || 0,
+            rating_3: record.rating_3_star || 0,
+            rating_4: record.rating_4_star || 0,
+            rating_5: record.rating_5_star || 0
+        },
+        icons: {
+            large: record.image_url || '',
+            small: record.image_url || '' // Use the same URL for both since you only have one
+        }
+    };
 }
-
 /**
  * Validates that the ISBN path param is 10–13 digits
  */
@@ -201,17 +211,22 @@ booksRouter.get(
     const isbnString = req.params.isbn;
 
     const sqlQuery = `
-      SELECT 
-        book_id,
-        isbn,
-        title,
-        original_title,
-        author,
-        publication_year,
-        icon_url_large,
-        icon_url_small
-      FROM books
-      WHERE isbn = $1
+        SELECT
+            id,
+            isbn13,
+            original_title,
+            authors,
+            publication_year,
+            image_url,
+            rating_avg,
+            rating_count,
+            rating_1_star,
+            rating_2_star,
+            rating_3_star,
+            rating_4_star,
+            rating_5_star
+        FROM books
+        WHERE isbn13 = $1
     `;
     const sqlParams = [isbnString];
 
@@ -256,8 +271,8 @@ booksRouter.post(
     const maxRes = await pool.query('SELECT MAX(book_id) as maxid FROM books');
     const newId = (maxRes.rows[0].maxid || 0) + 1;
     const sqlQuery = `
-      INSERT INTO books (book_id, isbn, author, publication_year, title, description, genre, price, stock_quantity)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO books (id, isbn13, authors, publication_year, original_title, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
     const sqlParams = [
@@ -416,7 +431,7 @@ booksRouter.delete(
 
     try {
       // First check if the book exists
-      const checkQuery = 'SELECT book_id FROM books WHERE isbn = $1';
+      const checkQuery = 'SELECT id FROM books WHERE isbn = $1';
       const checkResult = await pool.query(checkQuery, [isbnString]);
       
       if (checkResult.rowCount === 0) {
