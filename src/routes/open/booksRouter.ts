@@ -138,14 +138,22 @@ function validatebookRating(req: Request, res: Response, next: NextFunction) {
  * @apiParam  {String} author   URL-encoded author name
  *
  * @apiSuccess {Object[]} books     Matching book records
- * @apiSuccess {Number}   books.book_id
  * @apiSuccess {BigInt}   books.isbn13
- * @apiSuccess {Number}   books.original_publication_year
+ * @apiSuccess {String}   books.authors
+ * @apiSuccess {Number}   books.publication
  * @apiSuccess {String}   books.original_title
  * @apiSuccess {String}   books.title
- * @apiSuccess {String}   books.image_url
- * @apiSuccess {String}   books.small_image_url
- * @apiSuccess {String}   books.formatted
+ * @apiSuccess {Object}   books.ratings
+ * @apiSuccess {Number}   books.ratings.average
+ * @apiSuccess {Number}   books.ratings.count
+ * @apiSuccess {Number}   books.ratings.rating_1
+ * @apiSuccess {Number}   books.ratings.rating_2
+ * @apiSuccess {Number}   books.ratings.rating_3
+ * @apiSuccess {Number}   books.ratings.rating_4
+ * @apiSuccess {Number}   books.ratings.rating_5
+ * @apiSuccess {Object}   books.icons
+ * @apiSuccess {String}   books.icons.large
+ * @apiSuccess {String}   books.icons.small
  *
  * @apiError   (404) {String} message  "Author not found"
  * @apiError   (500) {String} message  "Server error – contact support"
@@ -619,15 +627,23 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
  *
  * @apiParam  {Number} rating   Rating value (1-5)
  *
- * @apiSuccess {Object[]} books     Matching book records
- * @apiSuccess {Number}   books.book_id
- * @apiSuccess {String}   books.isbn
- * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {Object[]} books     Matching book records with an average rating within +/- 0.2 of the specified rating.
+ * @apiSuccess {BigInt}   books.isbn13
+ * @apiSuccess {String}   books.authors
+ * @apiSuccess {Number}   books.publication
+ * @apiSuccess {String}   books.original_title
  * @apiSuccess {String}   books.title
- * @apiSuccess {String}   books.image_url
- * @apiSuccess {String}   books.small_image_url
- * @apiSuccess {String}   books.formatted
- * @apiSuccess {Number}   books.average_rating
+ * @apiSuccess {Object}   books.ratings
+ * @apiSuccess {Number}   books.ratings.average
+ * @apiSuccess {Number}   books.ratings.count
+ * @apiSuccess {Number}   books.ratings.rating_1
+ * @apiSuccess {Number}   books.ratings.rating_2
+ * @apiSuccess {Number}   books.ratings.rating_3
+ * @apiSuccess {Number}   books.ratings.rating_4
+ * @apiSuccess {Number}   books.ratings.rating_5
+ * @apiSuccess {Object}   books.icons
+ * @apiSuccess {String}   books.icons.large
+ * @apiSuccess {String}   books.icons.small
  *
  * @apiError   (400) {String} message  "Invalid rating – must be between 1 and 5"
  * @apiError   (404) {String} message  "No books found with that rating"
