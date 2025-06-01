@@ -48,6 +48,7 @@ async function getRatingCounts(bookId: number): Promise<IRatings> {
         rating_5: parseInt(result.rows[0].rating_5 || 0)
     };
 }
+
 /**
  * Formats a database record into the required interface
  */
@@ -57,7 +58,7 @@ async function formatRecord(record: BookRecord): Promise<IBook> {
         authors: record.authors,
         publication: record.publication_year,
         original_title: record.original_title || '',
-        title: record.title || '', // Since you don't have a title column, use original_title
+        title: record.title || record.original_title || '', // Use title if available, fallback to original_title
         ratings: {
             average: record.rating_avg || 0,
             count: record.rating_count || 0,
@@ -69,65 +70,65 @@ async function formatRecord(record: BookRecord): Promise<IBook> {
         },
         icons: {
             large: record.image_url || '',
-            small: record.image_small_url || '' // Use the same URL for both since you only have one
+            small: record.image_small_url || ''
         }
     };
 }
+
 /**
  * Validates that the ISBN path param is 10–13 digits
  */
 function validateIsbnFormat(req: Request, res: Response, next: NextFunction) {
-  const isbnString = req.params.isbn;
-  if (/^[0-9]{10,13}$/.test(isbnString)) {
-    return next();
-  }
-  res.status(400).json({ message: 'Invalid ISBN format.' });
+    const isbnString = req.params.isbn;
+    if (/^[0-9]{10,13}$/.test(isbnString)) {
+        return next();
+    }
+    res.status(400).json({ message: 'Invalid ISBN format.' });
 }
 
 /**
  * Ensures that the author name is provided in the request body
  */
 function validateAuthorName(req: Request, res: Response, next: NextFunction) {
-  const rawAuthor = req.params.author;
-  const authorName = decodeURIComponent(rawAuthor);
-  if (isStringProvided(authorName)) {
-    return next();
-  }
-  console.error('Author validation failed');
-  res
-    .status(400)
-    .json({ message: 'Invalid author name – please check the docs.' });
+    const rawAuthor = req.params.author;
+    const authorName = decodeURIComponent(rawAuthor);
+    if (isStringProvided(authorName)) {
+        return next();
+    }
+    console.error('Author validation failed');
+    res
+        .status(400)
+        .json({ message: 'Invalid author name – please check the docs.' });
 }
 
 /**
  * Validates required fields for creating a book
  */
 function validatebookData(req: Request, res: Response, next: NextFunction) {
-  const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
-  if (
-    !isStringProvided(isbn) ||
-    !isStringProvided(authors) ||
-    !isNumberProvided(publication_year) ||
-    !isStringProvided(original_title) ||
-    !isStringProvided(title) ||
-    !isStringProvided(image_url) ||
-    !isStringProvided(small_image_url)
-  ) {
-    return res.status(400).json({ message: 'Invalid book data – please check the docs.' });
-  }
-  next();
+    const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
+    if (
+        !isStringProvided(isbn) ||
+        !isStringProvided(authors) ||
+        !isNumberProvided(publication_year) ||
+        !isStringProvided(original_title) ||
+        !isStringProvided(title) ||
+        !isStringProvided(image_url) ||
+        !isStringProvided(small_image_url)
+    ) {
+        return res.status(400).json({ message: 'Invalid book data – please check the docs.' });
+    }
+    next();
 }
 
 /**
  * Validates that the book's Rating is between 0 and 5
- * 
  */
 function validatebookRating(req: Request, res: Response, next: NextFunction) {
-  const rating = req.body.rating;
-  if (rating < 0 || rating > 5) {
-    return res.status(400).json({ message: 'Invalid book rating – please check the docs.' });
-  }
-  next();
+    const rating = req.body.rating;
+    if (rating < 0 || rating > 5) {
+        return res.status(400).json({ message: 'Invalid book rating – please check the docs.' });
+    }
+    next();
 }
 
 /**
@@ -159,43 +160,45 @@ function validatebookRating(req: Request, res: Response, next: NextFunction) {
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
-  '/author/:author',
-  validateAuthorName,
-  async (req: Request, res: Response) => {
-    try {
-      const { author } = req.params;
-      const query = `
-        SELECT
-          id,
-          isbn13,
-          original_title,
-          authors,
-          publication_year,
-          image_url,
-          rating_avg,
-          rating_count,
-          rating_1_star,
-          rating_2_star,
-          rating_3_star,
-          rating_4_star,
-          rating_5_star
-        FROM books
-        WHERE authors ILIKE $1
-        ORDER BY original_title
-      `;
-      const result = await pool.query(query, [`%${author}%`]);
+    '/author/:author',
+    validateAuthorName,
+    async (req: Request, res: Response) => {
+        try {
+            const { author } = req.params;
+            const query = `
+                SELECT
+                    id,
+                    isbn13,
+                    original_title,
+                    title,
+                    authors,
+                    publication_year,
+                    image_url,
+                    image_small_url,
+                    rating_avg,
+                    rating_count,
+                    rating_1_star,
+                    rating_2_star,
+                    rating_3_star,
+                    rating_4_star,
+                    rating_5_star
+                FROM books
+                WHERE authors ILIKE $1
+                ORDER BY original_title
+            `;
+            const result = await pool.query(query, [`%${author}%`]);
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'No books found for this author' });
-      }
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'No books found for this author' });
+            }
 
-      const books = await Promise.all(result.rows.map(formatRecord));
-      return res.json({ books });
-    } catch (error) {
-      console.error('Error getting books by author:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+            const books = await Promise.all(result.rows.map(formatRecord));
+            return res.json({ books });
+        } catch (error) {
+            console.error('Error getting books by author:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
     }
-  }
 );
 
 /**
@@ -219,45 +222,45 @@ booksRouter.get(
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
-  '/isbn/:isbn',
-  validateIsbnFormat,
-  async (req: Request, res: Response) => {
-    const isbnString = req.params.isbn;
+    '/isbn/:isbn',
+    validateIsbnFormat,
+    async (req: Request, res: Response) => {
+        const isbnString = req.params.isbn;
 
-    const sqlQuery = `
-        SELECT
-            id,
-            isbn13,
-            original_title,
-            title,
-            authors,
-            publication_year,
-            image_url,
-            image_small_url,
-            rating_avg,
-            rating_count,
-            rating_1_star,
-            rating_2_star,
-            rating_3_star,
-            rating_4_star,
-            rating_5_star
-        FROM books
-        WHERE isbn13 = $1
-    `;
-    const sqlParams = [isbnString];
+        const sqlQuery = `
+            SELECT
+                id,
+                isbn13,
+                original_title,
+                title,
+                authors,
+                publication_year,
+                image_url,
+                image_small_url,
+                rating_avg,
+                rating_count,
+                rating_1_star,
+                rating_2_star,
+                rating_3_star,
+                rating_4_star,
+                rating_5_star
+            FROM books
+            WHERE isbn13 = $1
+        `;
+        const sqlParams = [isbnString];
 
-    try {
-      const queryResult = await pool.query(sqlQuery, sqlParams);
-      if (queryResult.rowCount > 0) {
-        const book = await formatRecord(queryResult.rows[0]);
-        return res.json({ book });
-      }
-      res.status(404).json({ message: 'book not found' });
-    } catch (err) {
-      console.error('Error fetching book by ISBN', err);
-      res.status(500).json({ message: 'Server error – contact support' });
+        try {
+            const queryResult = await pool.query(sqlQuery, sqlParams);
+            if (queryResult.rowCount > 0) {
+                const book = await formatRecord(queryResult.rows[0]);
+                return res.json({ book });
+            }
+            res.status(404).json({ message: 'book not found' });
+        } catch (err) {
+            console.error('Error fetching book by ISBN', err);
+            res.status(500).json({ message: 'Server error – contact support' });
+        }
     }
-  }
 );
 
 /**
@@ -279,99 +282,101 @@ booksRouter.get(
  * @apiError   (500) {String} message     Server error – contact support
  */
 booksRouter.post(
-  '/',
-  validatebookData,
-  async (req: Request, res: Response) => {
-    const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
-    // Generate a new ID since `id` has no default sequence
-    const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
-    const newId = (maxRes.rows[0].maxid || 0) + 1;
-      const sqlQuery = `
+    '/',
+    validatebookData,
+    async (req: Request, res: Response) => {
+        const { isbn, authors, publication_year, original_title, title, image_url, small_image_url } = req.body;
+
+        try {
+            // Generate a new ID since `id` has no default sequence
+            const maxRes = await pool.query('SELECT MAX(id) as maxid FROM books');
+            const newId = (maxRes.rows[0].maxid || 0) + 1;
+
+            const sqlQuery = `
           INSERT INTO books (id, isbn13, authors, publication_year, original_title, title, image_url, image_small_url)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
               RETURNING *;
       `;
-      const sqlParams = [
-          newId,
-          isbn.toString(),
-          authors,
-          publication_year,
-          original_title,
-          title,
-          image_url,
-          small_image_url  // This maps your small_image_url param to the image_small_url column
-      ];
+            const sqlParams = [
+                newId,
+                isbn.toString(),
+                authors,
+                publication_year,
+                original_title,
+                title,
+                image_url,
+                small_image_url
+            ];
 
-    try {
-      const queryResult = await pool.query(sqlQuery, sqlParams);
-      return res.status(201).json({ book: queryResult.rows[0] });
-    } catch (err) {
-      console.error('Error creating book', err);
-      res.status(500).json({ message: 'Server error – contact support' });
+            const queryResult = await pool.query(sqlQuery, sqlParams);
+            return res.status(201).json({ book: queryResult.rows[0] });
+        } catch (err) {
+            console.error('Error creating book', err);
+            res.status(500).json({ message: 'Server error – contact support' });
+        }
     }
-  }
 );
 
 /**
  * @api {patch} /books/rating       Update a book rating
  * @apiName UpdatebookRating
  * @apiGroup books
- * 
+ *
  * @apiBody  {Number}  book_id     ID of the book to update rating for
  * @apiBody  {Number}  rating      New rating value (0-5)
- * 
+ *
  * @apiSuccess (200) {Object} rating        The updated rating record
- * 
+ *
  * @apiError   (400) {String} message       Invalid rating value
  * @apiError   (404) {String} message       book not found
  * @apiError   (500) {String} message       Server error – contact support
  */
 booksRouter.patch(
-  '/rating',
-  validatebookRating,
-  async (req: Request, res: Response) => {
-    console.log('Rating update endpoint hit with data:', req.body);
-    try {
-      const { book_id, rating } = req.body;
+    '/rating',
+    validatebookRating,
+    async (req: Request, res: Response) => {
+        console.log('Rating update endpoint hit with data:', req.body);
+        try {
+            const { book_id, rating } = req.body;
 
-      // First check if the book exists
-      const bookCheckQuery = 'SELECT id FROM books WHERE id = $1';
-      const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
-      
-      if (bookCheckResult.rowCount === 0) {
-        return res.status(404).json({ message: 'book not found' });
-      }
+            // First check if the book exists
+            const bookCheckQuery = 'SELECT id FROM books WHERE id = $1';
+            const bookCheckResult = await pool.query(bookCheckQuery, [book_id]);
 
-      // Update or insert the rating
-      const sqlQuery = `
-        INSERT INTO book_rating (book_id, account_id, rating, review_text)
-        VALUES ($1, 1, $2, 'Updated via API')
-        ON CONFLICT (book_id, account_id) 
+            if (bookCheckResult.rowCount === 0) {
+                return res.status(404).json({ message: 'book not found' });
+            }
+
+            // Update or insert the rating
+            const sqlQuery = `
+                INSERT INTO book_rating (book_id, account_id, rating, review_text)
+                VALUES ($1, 1, $2, 'Updated via API')
+                    ON CONFLICT (book_id, account_id) 
         DO UPDATE SET rating = $2
-        RETURNING *;
-      `;
-      const sqlParams = [book_id, rating];
+                                   RETURNING *;
+            `;
+            const sqlParams = [book_id, rating];
 
-      console.log('Executing query:', sqlQuery, sqlParams);
-      const queryResult = await pool.query(sqlQuery, sqlParams);
-      console.log('Query result:', queryResult.rows[0]);
-      
-      return res.status(200).json({ rating: queryResult.rows[0] });
-    } catch (err) {
-      console.error('Error updating book rating', err);
-      res.status(500).json({ message: 'Server error – contact support' });
+            console.log('Executing query:', sqlQuery, sqlParams);
+            const queryResult = await pool.query(sqlQuery, sqlParams);
+            console.log('Query result:', queryResult.rows[0]);
+
+            return res.status(200).json({ rating: queryResult.rows[0] });
+        } catch (err) {
+            console.error('Error updating book rating', err);
+            res.status(500).json({ message: 'Server error – contact support' });
+        }
     }
-  }
 );
 
 /**
  * @api {get} /books       Get all books with pagination
  * @apiName GetAllbooks
  * @apiGroup books
- * 
+ *
  * @apiQuery {Number} [page=1]     Page number
  * @apiQuery {Number} [limit=10]   Number of books per page
- * 
+ *
  * @apiSuccess {Object[]} books    Array of book records
  * @apiSuccess {Number}   total    Total number of books
  * @apiSuccess {Number}   page     Current page number
@@ -379,55 +384,57 @@ booksRouter.patch(
  * @apiSuccess {Number}   pages    Total number of pages
  */
 booksRouter.get(
-  '/',
-  async (req: Request, res: Response) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const offset = (page - 1) * limit;
+    '/',
+    async (req: Request, res: Response) => {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const offset = (page - 1) * limit;
 
-      const countQuery = 'SELECT COUNT(*) FROM books';
-      const booksQuery = `
-        SELECT
-            id,
-            isbn13,
-            original_title,
-            authors,
-            publication_year,
-            image_url,
-            rating_avg,
-            rating_count,
-            rating_1_star,
-            rating_2_star,
-            rating_3_star,
-            rating_4_star,
-            rating_5_star
-        FROM books
-        ORDER BY original_title
-        LIMIT $1 OFFSET $2
-        `;
+            const countQuery = 'SELECT COUNT(*) FROM books';
+            const booksQuery = `
+                SELECT
+                    id,
+                    isbn13,
+                    original_title,
+                    title,
+                    authors,
+                    publication_year,
+                    image_url,
+                    image_small_url,
+                    rating_avg,
+                    rating_count,
+                    rating_1_star,
+                    rating_2_star,
+                    rating_3_star,
+                    rating_4_star,
+                    rating_5_star
+                FROM books
+                ORDER BY original_title
+                    LIMIT $1 OFFSET $2
+            `;
 
-      const [countResult, booksResult] = await Promise.all([
-        pool.query(countQuery),
-        pool.query(booksQuery, [limit, offset])
-      ]);
+            const [countResult, booksResult] = await Promise.all([
+                pool.query(countQuery),
+                pool.query(booksQuery, [limit, offset])
+            ]);
 
-      const total = parseInt(countResult.rows[0].count);
-      const pages = Math.ceil(total / limit);
-      const books = await Promise.all(booksResult.rows.map(formatRecord));
+            const total = parseInt(countResult.rows[0].count);
+            const pages = Math.ceil(total / limit);
+            const books = await Promise.all(booksResult.rows.map(formatRecord));
 
-      return res.json({
-        books,
-        total,
-        page,
-        limit,
-        pages
-      });
-    } catch (error) {
-      console.error('Error getting books:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+            return res.json({
+                books,
+                total,
+                page,
+                limit,
+                pages
+            });
+        } catch (error) {
+            console.error('Error getting books:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
     }
-  }
 );
 
 /**
@@ -444,36 +451,36 @@ booksRouter.get(
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.delete(
-  '/isbn/:isbn',
-  validateIsbnFormat,
-  async (req: Request, res: Response) => {
-    const isbnString = req.params.isbn;
+    '/isbn/:isbn',
+    validateIsbnFormat,
+    async (req: Request, res: Response) => {
+        const isbnString = req.params.isbn;
 
-    try {
-      // First check if the book exists
-      const checkQuery = 'SELECT id FROM books WHERE isbn13 = $1';
-      const checkResult = await pool.query(checkQuery, [isbnString]);
-      
-      if (checkResult.rowCount === 0) {
-        return res.status(404).json({ message: 'book not found' });
-      }
+        try {
+            // First check if the book exists
+            const checkQuery = 'SELECT id FROM books WHERE isbn13 = $1';
+            const checkResult = await pool.query(checkQuery, [isbnString]);
 
-      const bookId = checkResult.rows[0].book_id;
+            if (checkResult.rowCount === 0) {
+                return res.status(404).json({ message: 'book not found' });
+            }
 
-      // Delete ratings first (due to foreign key constraint)
-      const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = $1';
-      await pool.query(deleteRatingsQuery, [bookId]);
+            const bookId = checkResult.rows[0].id; // Fixed: was book_id, should be id
 
-      // Delete the book
-      const deleteQuery = 'DELETE FROM books WHERE isbn13 = $1';
-      await pool.query(deleteQuery, [isbnString]);
+            // Delete ratings first (due to foreign key constraint)
+            const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = $1';
+            await pool.query(deleteRatingsQuery, [bookId]);
 
-      return res.status(200).json({ message: 'book deleted successfully' });
-    } catch (err) {
-      console.error('Error deleting book by ISBN', err);
-      res.status(500).json({ message: 'Server error – contact support' });
+            // Delete the book
+            const deleteQuery = 'DELETE FROM books WHERE isbn13 = $1';
+            await pool.query(deleteQuery, [isbnString]);
+
+            return res.status(200).json({ message: 'book deleted successfully' });
+        } catch (err) {
+            console.error('Error deleting book by ISBN', err);
+            res.status(500).json({ message: 'Server error – contact support' });
+        }
     }
-  }
 );
 
 /**
@@ -493,58 +500,58 @@ booksRouter.delete(
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.delete(
-  '/range',
-  async (req: Request, res: Response) => {
-    const { start_isbn, end_isbn } = req.body;
+    '/range',
+    async (req: Request, res: Response) => {
+        const { start_isbn, end_isbn } = req.body;
 
-    if (!start_isbn || !end_isbn) {
-      return res.status(400).json({ message: 'Missing start_isbn or end_isbn' });
+        if (!start_isbn || !end_isbn) {
+            return res.status(400).json({ message: 'Missing start_isbn or end_isbn' });
+        }
+
+        try {
+            // First get all book IDs in the range
+            const getbooksQuery = 'SELECT id FROM books WHERE isbn13 BETWEEN $1 AND $2';
+            const booksResult = await pool.query(getbooksQuery, [start_isbn.toString(), end_isbn.toString()]);
+
+            if (booksResult.rowCount === 0) {
+                return res.status(404).json({ message: 'No books found in range' });
+            }
+
+            const bookIds = booksResult.rows.map(row => row.id); // Fixed: was book_id, should be id
+
+            // Delete ratings first (due to foreign key constraint)
+            const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = ANY($1)';
+            await pool.query(deleteRatingsQuery, [bookIds]);
+
+            // Delete books in range and return their ISBNs
+            const deleteQuery = 'DELETE FROM books WHERE id = ANY($1) RETURNING isbn13';
+            const result = await pool.query(deleteQuery, [bookIds]);
+
+            return res.status(200).json({
+                message: 'books deleted successfully',
+                deleted_count: result.rowCount,
+                deleted_isbns: result.rows.map(row => row.isbn13) // Fixed: was isbn, should be isbn13
+            });
+        } catch (err) {
+            console.error('Error deleting books by range', err);
+            res.status(500).json({ message: 'Server error – contact support' });
+        }
     }
-
-    try {
-      // First get all book IDs in the range
-      const getbooksQuery = 'SELECT id FROM books WHERE isbn13 BETWEEN $1 AND $2';
-      const booksResult = await pool.query(getbooksQuery, [start_isbn.toString(), end_isbn.toString()]);
-
-      if (booksResult.rowCount === 0) {
-        return res.status(404).json({ message: 'No books found in range' });
-      }
-
-      const bookIds = booksResult.rows.map(row => row.book_id);
-
-      // Delete ratings first (due to foreign key constraint)
-      const deleteRatingsQuery = 'DELETE FROM book_rating WHERE book_id = ANY($1)';
-      await pool.query(deleteRatingsQuery, [bookIds]);
-
-      // Delete books in range and return their ISBNs
-      const deleteQuery = 'DELETE FROM books WHERE id = ANY($1) RETURNING isbn13';
-      const result = await pool.query(deleteQuery, [bookIds]);
-
-      return res.status(200).json({
-        message: 'books deleted successfully',
-        deleted_count: result.rowCount,
-        deleted_isbns: result.rows.map(row => row.isbn)
-      });
-    } catch (err) {
-      console.error('Error deleting books by range', err);
-      res.status(500).json({ message: 'Server error – contact support' });
-    }
-  }
 );
 
 /**
  * Ensures that the title is provided in the request params
  */
 function validateTitle(req: Request, res: Response, next: NextFunction) {
-  const rawTitle = req.params.title;
-  const title = decodeURIComponent(rawTitle);
-  if (isStringProvided(title)) {
-    return next();
-  }
-  console.error('Title validation failed');
-  res
-    .status(400)
-    .json({ message: 'Invalid title – please check the docs.' });
+    const rawTitle = req.params.title;
+    const title = decodeURIComponent(rawTitle);
+    if (isStringProvided(title)) {
+        return next();
+    }
+    console.error('Title validation failed');
+    res
+        .status(400)
+        .json({ message: 'Invalid title – please check the docs.' });
 }
 
 /**
@@ -555,69 +562,80 @@ function validateTitle(req: Request, res: Response, next: NextFunction) {
  * @apiParam  {String} title   URL-encoded book title
  *
  * @apiSuccess {Object[]} books     Matching book records
- * @apiSuccess {Number}   books.book_id
- * @apiSuccess {String}   books.isbn
- * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {BigInt}   books.isbn13
+ * @apiSuccess {String}   books.authors
+ * @apiSuccess {Number}   books.publication
+ * @apiSuccess {String}   books.original_title
  * @apiSuccess {String}   books.title
- * @apiSuccess {String}   books.image_url
- * @apiSuccess {String}   books.small_image_url
- * @apiSuccess {String}   books.formatted
+ * @apiSuccess {Object}   books.ratings
+ * @apiSuccess {Number}   books.ratings.average
+ * @apiSuccess {Number}   books.ratings.count
+ * @apiSuccess {Number}   books.ratings.rating_1
+ * @apiSuccess {Number}   books.ratings.rating_2
+ * @apiSuccess {Number}   books.ratings.rating_3
+ * @apiSuccess {Number}   books.ratings.rating_4
+ * @apiSuccess {Number}   books.ratings.rating_5
+ * @apiSuccess {Object}   books.icons
+ * @apiSuccess {String}   books.icons.large
+ * @apiSuccess {String}   books.icons.small
  *
  * @apiError   (404) {String} message  "No books found with that title"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
-  '/title/:title',
-  validateTitle,
-  async (req: Request, res: Response) => {
-    try {
-      const { title } = req.params;
-      const query = `
-          SELECT 
-            id,
-            isbn13,
-            original_title,
-            authors,
-            publication_year,
-            image_url,
-            rating_avg,
-            rating_count,
-            rating_1_star,
-            rating_2_star,
-            rating_3_star,
-            rating_4_star,
-            rating_5_star
-          FROM books
-          WHERE original_title ILIKE $1
-          ORDER BY original_title
-        `;
-      const result = await pool.query(query, [`%${title}%`]);
+    '/title/:title',
+    validateTitle,
+    async (req: Request, res: Response) => {
+        try {
+            const { title } = req.params;
+            const query = `
+                SELECT
+                    id,
+                    isbn13,
+                    original_title,
+                    title,
+                    authors,
+                    publication_year,
+                    image_url,
+                    image_small_url,
+                    rating_avg,
+                    rating_count,
+                    rating_1_star,
+                    rating_2_star,
+                    rating_3_star,
+                    rating_4_star,
+                    rating_5_star
+                FROM books
+                WHERE original_title ILIKE $1
+                ORDER BY original_title
+            `;
+            const result = await pool.query(query, [`%${title}%`]);
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'No books found with this title' });
-      }
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'No books found with this title' });
+            }
 
-      const books = await Promise.all(result.rows.map(formatRecord));
-      return res.json({ books });
-    } catch (error) {
-      console.error('Error getting books by title:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+            const books = await Promise.all(result.rows.map(formatRecord));
+            return res.json({ books });
+        } catch (error) {
+            console.error('Error getting books by title:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
     }
-  }
 );
 
 /**
  * Validates that the rating is a number between 1 and 5
  */
 function validateRatingParam(req: Request, res: Response, next: NextFunction) {
-  const rating = parseFloat(req.params.rating);
-  if (!isNaN(rating) && rating >= 1 && rating <= 5) {
-    return next();
-  }
-  console.error('Rating validation failed');
-  res
-    .status(400)
-    .json({ error: 'Invalid rating – must be between 1 and 5.' });
+    const rating = parseFloat(req.params.rating);
+    if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+        return next();
+    }
+    console.error('Rating validation failed');
+    res
+        .status(400)
+        .json({ error: 'Invalid rating – must be between 1 and 5.' });
 }
 
 /**
@@ -663,9 +681,11 @@ booksRouter.get(
                 id,
                 isbn13,
                 original_title,
+                title,
                 authors,
                 publication_year,
                 image_url,
+                image_small_url,
                 rating_avg,
                 rating_count,
                 rating_1_star,
@@ -696,14 +716,14 @@ booksRouter.get(
  * Validates that the year is a valid number
  */
 function validateYear(req: Request, res: Response, next: NextFunction) {
-  const year = parseInt(req.params.year);
-  if (!isNaN(year) && year > 0) {
-    return next();
-  }
-  console.error('Year validation failed');
-  res
-    .status(400)
-    .json({ error: 'Invalid year – must be a positive number.' });
+    const year = parseInt(req.params.year);
+    if (!isNaN(year) && year > 0) {
+        return next();
+    }
+    console.error('Year validation failed');
+    res
+        .status(400)
+        .json({ error: 'Invalid year – must be a positive number.' });
 }
 
 /**
@@ -714,59 +734,69 @@ function validateYear(req: Request, res: Response, next: NextFunction) {
  * @apiParam  {Number} year   Publication year
  *
  * @apiSuccess {Object[]} books     Matching book records
- * @apiSuccess {Number}   books.book_id
- * @apiSuccess {String}   books.isbn
- * @apiSuccess {Number}   books.publication_year
+ * @apiSuccess {BigInt}   books.isbn13
+ * @apiSuccess {String}   books.authors
+ * @apiSuccess {Number}   books.publication
  * @apiSuccess {String}   books.original_title
  * @apiSuccess {String}   books.title
- * @apiSuccess {String}   books.image_url
- * @apiSuccess {String}   books.small_image_url
- * @apiSuccess {String}   books.formatted
+ * @apiSuccess {Object}   books.ratings
+ * @apiSuccess {Number}   books.ratings.average
+ * @apiSuccess {Number}   books.ratings.count
+ * @apiSuccess {Number}   books.ratings.rating_1
+ * @apiSuccess {Number}   books.ratings.rating_2
+ * @apiSuccess {Number}   books.ratings.rating_3
+ * @apiSuccess {Number}   books.ratings.rating_4
+ * @apiSuccess {Number}   books.ratings.rating_5
+ * @apiSuccess {Object}   books.icons
+ * @apiSuccess {String}   books.icons.large
+ * @apiSuccess {String}   books.icons.small
  *
  * @apiError   (400) {String} message  "Invalid year – must be a positive number"
  * @apiError   (404) {String} message  "No books found from that year"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
-  '/year/:year',
-  validateYear,
-  async (req: Request, res: Response) => {
-    const year = parseInt(req.params.year);
-    if (isNaN(year) || year < 0) {
-        return res.status(400).json({ error: 'Year must be a positive number' });
-    }
-
-    const query = `
-      SELECT 
-        id,
-        isbn13,
-        original_title,
-        authors,
-        publication_year,
-        image_url,
-        rating_avg,
-        rating_count,
-        rating_1_star,
-        rating_2_star,
-        rating_3_star,
-        rating_4_star,
-        rating_5_star
-      FROM books
-      WHERE publication_year = $1
-      ORDER BY original_title
-    `;
-    try {
-        const result = await pool.query(query, [year]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'No books found for this year' });
+    '/year/:year',
+    validateYear,
+    async (req: Request, res: Response) => {
+        const year = parseInt(req.params.year);
+        if (isNaN(year) || year < 0) {
+            return res.status(400).json({ error: 'Year must be a positive number' });
         }
-        const books = await Promise.all(result.rows.map(formatRecord));
-        res.json({ books });
-    } catch (err) {
-        console.error('Database query error:', err);
-        res.status(500).json({ error: 'Internal server error' });
+
+        const query = `
+            SELECT
+                id,
+                isbn13,
+                original_title,
+                title,
+                authors,
+                publication_year,
+                image_url,
+                image_small_url,
+                rating_avg,
+                rating_count,
+                rating_1_star,
+                rating_2_star,
+                rating_3_star,
+                rating_4_star,
+                rating_5_star
+            FROM books
+            WHERE publication_year = $1
+            ORDER BY original_title
+        `;
+        try {
+            const result = await pool.query(query, [year]);
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'No books found for this year' });
+            }
+            const books = await Promise.all(result.rows.map(formatRecord));
+            res.json({ books });
+        } catch (err) {
+            console.error('Database query error:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
-  }
 );
 
-export { booksRouter }; 
+export { booksRouter };
