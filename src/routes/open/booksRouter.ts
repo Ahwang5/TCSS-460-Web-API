@@ -54,6 +54,7 @@ async function getRatingCounts(bookId: number): Promise<IRatings> {
  */
 async function formatRecord(record: BookRecord): Promise<IBook> {
     return {
+        id: record.id,
         isbn13: parseInt(record.isbn13.toString()),
         authors: record.authors,
         publication: record.publication_year,

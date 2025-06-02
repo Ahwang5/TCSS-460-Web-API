@@ -26,6 +26,7 @@ export interface IUrlIcon {
 }
 
 export interface IBook {
+  id: number;
   isbn13: number;
   authors: string;
   publication: number;
