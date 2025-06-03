@@ -800,7 +800,7 @@ booksRouter.get(
     }
 );
 
-booksRouter.post('/admin/add-isbn-constraint', async (req: Request, res: Response) => {
+booksRouter.post('/admin/clean-and-add-constraint', async (req: Request, res: Response) => {
     try {
         console.log('Adding unique constraint to books.isbn13...');
 
