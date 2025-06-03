@@ -830,4 +830,50 @@ booksRouter.post('/admin/clean-and-add-constraint', async (req: Request, res: Re
     }
 });
 
+booksRouter.post('/admin/manual-cleanup', async (req: Request, res: Response) => {
+    try {
+        console.log('Starting manual cleanup of duplicate books...');
+
+        // Delete the 4 duplicate books, keep ID 9155
+        const idsToDelete = [9156, 9157, 9158, 9159];
+
+        // First, delete any ratings for these books to avoid foreign key issues
+        await pool.query('DELETE FROM book_rating WHERE book_id = ANY($1)', [idsToDelete]);
+        console.log('Deleted ratings for duplicate books');
+
+        // Then delete the duplicate books
+        const deleteResult = await pool.query('DELETE FROM books WHERE id = ANY($1) RETURNING id', [idsToDelete]);
+        console.log(`Deleted ${deleteResult.rowCount} duplicate books with IDs: ${idsToDelete.join(', ')}`);
+
+        // Now try to add the unique constraint
+        await pool.query('ALTER TABLE books ADD CONSTRAINT unique_isbn13 UNIQUE (isbn13)');
+        console.log('✅ Successfully added unique constraint to books.isbn13');
+
+        return res.json({
+            success: true,
+            message: 'Manual cleanup completed successfully',
+            books_deleted: deleteResult.rowCount,
+            deleted_ids: idsToDelete,
+            kept_book_id: 9155
+        });
+
+    } catch (error) {
+        console.error('Manual cleanup error:', error);
+
+        if (error.code === '42P07') {
+            return res.json({
+                success: true,
+                message: 'Constraint already exists - cleanup may have worked'
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Manual cleanup failed',
+            error: error.message,
+            code: error.code
+        });
+    }
+});
+
 export { booksRouter };
