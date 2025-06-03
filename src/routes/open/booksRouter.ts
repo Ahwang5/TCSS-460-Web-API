@@ -630,7 +630,7 @@ booksRouter.get(
  */
 function validateRatingParam(req: Request, res: Response, next: NextFunction) {
     const rating = parseFloat(req.params.rating);
-    if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+    if (!isNaN(rating) && rating >= 0 && rating <= 5) {
         return next();
     }
     console.error('Rating validation failed');
@@ -799,5 +799,35 @@ booksRouter.get(
         }
     }
 );
+
+booksRouter.post('/admin/add-isbn-constraint', async (req: Request, res: Response) => {
+    try {
+        console.log('Adding unique constraint to books.isbn13...');
+
+        await pool.query('ALTER TABLE books ADD CONSTRAINT unique_isbn13 UNIQUE (isbn13)');
+
+        return res.json({
+            success: true,
+            message: 'Successfully added unique constraint to books.isbn13'
+        });
+    } catch (error) {
+        console.error('Migration error:', error);
+
+        // If constraint already exists (error code 42P07), that's fine
+        if (error.code === '42P07') {
+            return res.json({
+                success: true,
+                message: 'Constraint already exists - no changes needed'
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to add constraint',
+            error: error.message,
+            code: error.code
+        });
+    }
+});
 
 export { booksRouter };
