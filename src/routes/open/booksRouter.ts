@@ -348,15 +348,17 @@ booksRouter.patch(
                 return res.status(404).json({ message: 'book not found' });
             }
 
-            // Update or insert the rating
+            // Fixed: Use the correct primary key columns
             const sqlQuery = `
                 INSERT INTO book_rating (book_id, account_id, rating, review_text)
-                VALUES ($1, 1, $2, 'Updated via API')
+                VALUES ($1, $2, $3, 'Updated via API')
                     ON CONFLICT (book_id, account_id) 
-        DO UPDATE SET rating = $2
-                                   RETURNING *;
+                DO UPDATE SET
+                    rating = EXCLUDED.rating,
+                                           review_text = EXCLUDED.review_text
+                                           RETURNING *;
             `;
-            const sqlParams = [book_id, rating];
+            const sqlParams = [book_id, 1, rating]; // Using account_id = 1
 
             console.log('Executing query:', sqlQuery, sqlParams);
             const queryResult = await pool.query(sqlQuery, sqlParams);
@@ -364,8 +366,13 @@ booksRouter.patch(
 
             return res.status(200).json({ rating: queryResult.rows[0] });
         } catch (err) {
-            console.error('Error updating book rating', err);
-            res.status(500).json({ message: 'Server error – contact support' });
+            console.error('Error updating book rating:', err);
+            console.error('Error code:', err.code);
+
+            res.status(500).json({
+                message: 'Server error – contact support',
+                error: err.message
+            });
         }
     }
 );
@@ -800,80 +807,5 @@ booksRouter.get(
     }
 );
 
-booksRouter.post('/admin/clean-and-add-constraint', async (req: Request, res: Response) => {
-    try {
-        console.log('Adding unique constraint to books.isbn13...');
-
-        await pool.query('ALTER TABLE books ADD CONSTRAINT unique_isbn13 UNIQUE (isbn13)');
-
-        return res.json({
-            success: true,
-            message: 'Successfully added unique constraint to books.isbn13'
-        });
-    } catch (error) {
-        console.error('Migration error:', error);
-
-        // If constraint already exists (error code 42P07), that's fine
-        if (error.code === '42P07') {
-            return res.json({
-                success: true,
-                message: 'Constraint already exists - no changes needed'
-            });
-        }
-
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to add constraint',
-            error: error.message,
-            code: error.code
-        });
-    }
-});
-
-booksRouter.post('/admin/manual-cleanup', async (req: Request, res: Response) => {
-    try {
-        console.log('Starting manual cleanup of duplicate books...');
-
-        // Delete the 4 duplicate books, keep ID 9155
-        const idsToDelete = [9156, 9157, 9158, 9159];
-
-        // First, delete any ratings for these books to avoid foreign key issues
-        await pool.query('DELETE FROM book_rating WHERE book_id = ANY($1)', [idsToDelete]);
-        console.log('Deleted ratings for duplicate books');
-
-        // Then delete the duplicate books
-        const deleteResult = await pool.query('DELETE FROM books WHERE id = ANY($1) RETURNING id', [idsToDelete]);
-        console.log(`Deleted ${deleteResult.rowCount} duplicate books with IDs: ${idsToDelete.join(', ')}`);
-
-        // Now try to add the unique constraint
-        await pool.query('ALTER TABLE books ADD CONSTRAINT unique_isbn13 UNIQUE (isbn13)');
-        console.log('✅ Successfully added unique constraint to books.isbn13');
-
-        return res.json({
-            success: true,
-            message: 'Manual cleanup completed successfully',
-            books_deleted: deleteResult.rowCount,
-            deleted_ids: idsToDelete,
-            kept_book_id: 9155
-        });
-
-    } catch (error) {
-        console.error('Manual cleanup error:', error);
-
-        if (error.code === '42P07') {
-            return res.json({
-                success: true,
-                message: 'Constraint already exists - cleanup may have worked'
-            });
-        }
-
-        return res.status(500).json({
-            success: false,
-            message: 'Manual cleanup failed',
-            error: error.message,
-            code: error.code
-        });
-    }
-});
 
 export { booksRouter };
