@@ -647,13 +647,21 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
- * @api {get} /books/rating/:rating   Get books by rating
+ * @api {get} /books/rating/:rating   Get books by rating range
  * @apiName GetByRating
  * @apiGroup books
  *
- * @apiParam  {Number} rating   Rating value (1-5)
+ * @apiParam  {Number} rating   Rating value (0-5) - returns books in that rating range
+ * @apiDescription Returns books within the specified rating range:
+ * - Rating 0: books with 0.0 to 0.99
+ * - Rating 1: books with 1.0 to 1.99
+ * - Rating 2: books with 2.0 to 2.99
+ * - Rating 3: books with 3.0 to 3.99
+ * - Rating 4: books with 4.0 to 4.99
+ * - Rating 5: books with 5.0 exactly
  *
- * @apiSuccess {Object[]} books     Matching book records with an average rating within +/- 0.2 of the specified rating.
+ * @apiSuccess {Object[]} books     Matching book records within the rating range
+ * @apiSuccess {Number}   books.id
  * @apiSuccess {BigInt}   books.isbn13
  * @apiSuccess {String}   books.authors
  * @apiSuccess {Number}   books.publication
@@ -671,8 +679,8 @@ function validateRatingParam(req: Request, res: Response, next: NextFunction) {
  * @apiSuccess {String}   books.icons.large
  * @apiSuccess {String}   books.icons.small
  *
- * @apiError   (400) {String} message  "Invalid rating – must be between 1 and 5"
- * @apiError   (404) {String} message  "No books found with that rating"
+ * @apiError   (400) {String} message  "Invalid rating – must be between 0 and 5"
+ * @apiError   (404) {String} message  "No books found with that rating range"
  * @apiError   (500) {String} message  "Server error – contact support"
  */
 booksRouter.get(
@@ -680,9 +688,19 @@ booksRouter.get(
     validateRatingParam,
     async (req: Request, res: Response) => {
         const rating = parseFloat(req.params.rating);
-        // Find books with ratings within 0.2 of the specified rating
-        const lowerBound = rating - 0.2;
-        const upperBound = rating + 0.2;
+
+        let lowerBound: number;
+        let upperBound: number;
+
+        if (rating === 5) {
+            // Special case for 5-star ratings (exactly 5.0)
+            lowerBound = 5.0;
+            upperBound = 5.0;
+        } else {
+            // For ratings 0-4, use full ranges (e.g., 2 = 2.0 to 2.99)
+            lowerBound = rating;
+            upperBound = rating + 0.99;
+        }
 
         const query = `
             SELECT
@@ -702,17 +720,26 @@ booksRouter.get(
                 rating_4_star,
                 rating_5_star
             FROM books
-            WHERE rating_avg BETWEEN $1 AND $2
-            ORDER BY original_title
+            WHERE rating_avg >= $1 AND rating_avg <= $2
+            ORDER BY rating_avg DESC, original_title
         `;
 
         try {
             const result = await pool.query(query, [lowerBound, upperBound]);
             if (result.rows.length === 0) {
-                return res.status(404).json({ message: 'No books found with that rating' });
+                return res.status(404).json({
+                    message: `No books found with rating range ${lowerBound} to ${upperBound}`
+                });
             }
             const books = await Promise.all(result.rows.map(formatRecord));
-            res.json({ books });
+            res.json({
+                books,
+                rating_range: {
+                    requested: rating,
+                    range: `${lowerBound} to ${upperBound}`,
+                    count: books.length
+                }
+            });
         } catch (err) {
             console.error('Database query error:', err);
             res.status(500).json({ error: 'Internal server error' });
