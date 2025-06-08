@@ -1,4 +1,4 @@
-# TCSS 460 – Web API Project
+# TCSS 460 – Final Project Web API
 
 ## Hosted Links
 - **Heroku-hosted Web API:** [Heroku](https://group4-tcss460-web-api-88aed6dd5161.herokuapp.com/)
@@ -42,8 +42,8 @@ This Web API project implements a comprehensive book management system with secu
 
 ## Team Contributions
 
-### Bhavneet Bhargava – Lead Developer
-As the primary developer and maintainer of the Web API, I implemented and maintained:
+### Bhavneet Bhargava – Lead Developer & Primary Contributor
+As the primary developer and maintainer of the Web API, I implemented and maintained the majority of the project's functionality:
 
 #### Authentication & Security
 - Designed and implemented the complete authentication system
@@ -88,21 +88,28 @@ As the primary developer and maintainer of the Web API, I implemented and mainta
 - Ensured code quality and best practices
 - Managed project documentation
 
+### Andrew – Secondary Developer
+- Assisted with initial project setup
+- Implemented basic book routes
+- Fixed database table naming issues
+- Added SSL configuration
+- Contributed to user management features
+- Helped with deployment configuration
+
 ### Other Team Members
-- **Ayub** – Assisted with testing and route implementation
-- **Andrew** – Managed Heroku deployment and team coordination
-- **Bernard** – Contributed to database design and implementation
+- **Bernard** – Was assigned password reset functionality but did not complete the implementation. The feature was later implemented by the lead developer.
+- **Ayub** – Minimal contribution to the project.
 
 ## Development Process
 The project followed an iterative development process with regular team meetings and code reviews. Key milestones included:
 
-1. **Alpha Sprint**
+1. **Initial Phase**
+   - Project setup and architecture design
+   - Database schema design
    - Basic authentication system
    - Initial book management routes
-   - Database setup and configuration
-   - Basic testing implementation
 
-2. **Beta Sprint**
+2. **Development Phase**
    - Advanced search functionality
    - Rating system implementation
    - Enhanced error handling
@@ -114,6 +121,7 @@ The project followed an iterative development process with regular team meetings
    - Security enhancements
    - Documentation updates
    - Final testing and deployment
+   - Production deployment on Heroku
 
 ## Technical Stack
 - **Backend:** Node.js, Express, TypeScript
@@ -148,16 +156,21 @@ The project includes a comprehensive test suite:
 - Implement real-time updates using WebSocket
 - Add more comprehensive logging and monitoring
 
-_The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
+## Project Timeline
+- **May 2025**: Project kickoff and initial setup
+- **June 2025**: Core functionality implementation
+- **July 2025**: Testing and documentation
+- **August 2025**: Final deployment and presentation
 
 ## Sprint Comments
 - Bhavneet led the development of the entire Web API, implementing all core functionality and ensuring high code quality
 - Successfully implemented and tested all required routes with comprehensive error handling
-- Achieved 100% test coverage with 58 passing Postman tests
+- Achieved 100% test coverage with 68 passing Postman tests
 - Standardized API responses and implemented TypeScript interfaces for type safety
 - Fixed numerous bugs and improved database performance
 - Maintained the main development branch and merged all working code
 - Provided guidance and support to team members on API development
+- Took over and completed critical features that were not implemented by assigned team members
 
 
 <img width="822" alt="Screenshot 2025-05-10 at 11 53 26 PM" src="https://github.com/user-attachments/assets/efac2f6c-aeb2-4b0d-97c3-31266352ad59" />
