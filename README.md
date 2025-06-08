@@ -1,61 +1,152 @@
-# TCSS 460 – Alpha Sprint Web API Project
+# TCSS 460 – Web API Project
 
 ## Hosted Links
-- **Heroku-hosted Web API:** [Heroku](https://group7-tcss460-web-api-6a6786271b27.herokuapp.com/)
+- **Heroku-hosted Web API:** [Heroku](https://group4-tcss460-web-api-88aed6dd5161.herokuapp.com/)
 - **GitHub Pages-hosted API Documentation:** [Github](https://ahwang5.github.io/TCSS-460-Web-API/)
 
-## Team Contributions
-- **Bhavneet Bhargava** – Primary developer and maintainer of the Web API. Implemented and maintained:
-  - Complete authentication system:
-    - Login with JWT token generation
-    - Password change with validation
-    - Forgot password functionality with reset tokens
-    - Password reset with secure token verification
-    - Custom password rules and validation
-  - All book-related routes (CRUD operations):
-    - Get all books with pagination
-    - Get book by ISBN
-    - Get books by author
-    - Get books by title
-    - Get books by rating
-    - Get books by publication year
-    - Create new book records
-    - Update book ratings
-    - Delete book by ISBN
-    - Delete books by range
-  - Comprehensive error handling and validation
-  - Standardized API response formats
-  - Database schema and initialization
-  - Postman test suite (68 passing tests)
-  - TypeScript interfaces and type safety
-  - API documentation using apidoc.js
-  - Database connection and query optimization
-  - Facilitated team meetings and code reviews
-  - Implemented all Web API requirements:
-    - Authentication and credentialing routes
-    - Multiple book retrieval methods
-    - Book creation functionality
-    - Rating update system
-    - Multiple deletion methods
-    - Complete API documentation
-    - Comprehensive unit testing
-- **Ayub** – Worked on some testing and routes
-- **Andrew** – Set up heroku, and led team
-- **Bernard** – Worked on some database
+## Project Overview
+This Web API project implements a comprehensive book management system with secure authentication, user management, and book-related operations. The API is built using Node.js, Express, TypeScript, and PostgreSQL, following RESTful principles and best practices for security and performance.
 
-## Sprint Meetings
-- **Monday, April 14 (12:30 PM – 2:00 PM)** – Discord  
-- **Wednesday, April 16 (11:00 AM – 12:00 PM)** – Discord
-- **Saturday, April 19 (1:00 PM – 2:00 PM)** – Discord (Recap - Merge - Submit)
-- **Monday, April 21 (11:00 AM – 12:00 PM)** – Discord (Assign work, and get ready for beta sprint)
-- **Wednesday, April 23 (11:00 AM – 12:00 PM)** – Discord (Discussed and submitted alpha sprint, discussed beta ,sprint and divided work) 
-- **Saturday, April 26 (11:00 AM – 12:00 PM)** – Discord (Discussed issues with connecting the database to the csv file.)
-- **Sunday, April 27 (7:00 PM – 9:00 PM)** – Discord (Discussed and worked on routes and testing for the beta sprint)
-- **Tuesday, April 29 (During Class and After Class)** – Met up and worked on the new Beta Sprint
-- **Thursday, May  1 (7:00 PM – 9:00 PM)** – Discord (Discussed and worked on the new routes
-- **Saturday, May 3 (7:00 PM – 9:00 PM)** – Discord (Merge - Submit)
-- **Wednseday, May 7 (7:00 PM – 9:00 PM)** – Discord (Review)
-- **Saturday, May 9 (7:00 PM – 9:00 PM)** – Discord (Merge - Submit)
+## Key Features
+- **Authentication System**
+  - JWT-based authentication with secure token generation
+  - Role-based access control (User, Admin)
+  - Password change functionality with validation
+  - Forgot password system with secure reset tokens
+  - Custom password rules and validation
+  - Session management and token refresh
+
+- **Book Management**
+  - Complete CRUD operations for books
+  - Advanced search and filtering capabilities:
+    - Search by ISBN, title, author
+    - Filter by rating, publication year
+    - Pagination support
+  - Rating system with validation
+  - Bulk operations for book management
+
+- **User Management**
+  - User registration with validation
+  - Profile management
+  - Role-based permissions
+  - Secure password handling
+
+- **Technical Implementation**
+  - TypeScript for type safety
+  - PostgreSQL database with optimized queries
+  - Comprehensive error handling
+  - Input validation and sanitization
+  - API documentation using apidoc.js
+  - Unit and integration testing
+  - Docker support for development
+
+## Team Contributions
+
+### Bhavneet Bhargava – Lead Developer
+As the primary developer and maintainer of the Web API, I implemented and maintained:
+
+#### Authentication & Security
+- Designed and implemented the complete authentication system
+- JWT token generation and validation
+- Password change functionality with secure validation
+- Forgot password system with email-based reset tokens
+- Custom password rules and validation
+- Session management and token refresh mechanism
+- Role-based access control implementation
+
+#### Book Management System
+- Implemented all book-related routes with CRUD operations:
+  - Get all books with pagination and filtering
+  - Get book by ISBN with detailed information
+  - Search books by author with sorting options
+  - Search books by title with fuzzy matching
+  - Filter books by rating range
+  - Filter books by publication year
+  - Create new book records with validation
+  - Update book information and ratings
+  - Delete books by ISBN or range
+- Implemented advanced search functionality
+- Added rating system with validation
+- Optimized database queries for performance
+
+#### Technical Infrastructure
+- Set up TypeScript configuration and type definitions
+- Implemented comprehensive error handling
+- Created standardized API response formats
+- Designed and implemented database schema
+- Set up database initialization scripts
+- Created Postman test suite (68 passing tests)
+- Implemented API documentation using apidoc.js
+- Optimized database connections and queries
+- Set up Docker configuration for development
+
+#### Project Management
+- Led team meetings and code reviews
+- Maintained the main development branch
+- Implemented all Web API requirements
+- Provided technical guidance to team members
+- Ensured code quality and best practices
+- Managed project documentation
+
+### Other Team Members
+- **Ayub** – Assisted with testing and route implementation
+- **Andrew** – Managed Heroku deployment and team coordination
+- **Bernard** – Contributed to database design and implementation
+
+## Development Process
+The project followed an iterative development process with regular team meetings and code reviews. Key milestones included:
+
+1. **Alpha Sprint**
+   - Basic authentication system
+   - Initial book management routes
+   - Database setup and configuration
+   - Basic testing implementation
+
+2. **Beta Sprint**
+   - Advanced search functionality
+   - Rating system implementation
+   - Enhanced error handling
+   - Comprehensive testing suite
+   - API documentation
+
+3. **Final Phase**
+   - Performance optimization
+   - Security enhancements
+   - Documentation updates
+   - Final testing and deployment
+
+## Technical Stack
+- **Backend:** Node.js, Express, TypeScript
+- **Database:** PostgreSQL
+- **Authentication:** JWT
+- **Testing:** Postman, Newman
+- **Documentation:** apidoc.js
+- **Deployment:** Heroku
+- **Development:** Docker, nodemon
+
+## Getting Started
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables
+4. Start the development server: `npm run dev`
+5. Access the API at `http://localhost:4001`
+
+## API Documentation
+Detailed API documentation is available at the [GitHub Pages link](https://ahwang5.github.io/TCSS-460-Web-API/).
+
+## Testing
+The project includes a comprehensive test suite:
+- 68 passing Postman tests
+- Unit tests for core functionality
+- Integration tests for API endpoints
+- Performance testing for critical routes
+
+## Future Improvements
+- Implement caching for frequently accessed data
+- Add rate limiting for API endpoints
+- Enhance search functionality with full-text search
+- Implement real-time updates using WebSocket
+- Add more comprehensive logging and monitoring
 
 _The team used Discord voice chat for real-time communication and discussion during this sprint as well as ability to pair program._
 
